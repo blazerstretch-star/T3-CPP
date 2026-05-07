@@ -1,0 +1,150 @@
+{
+  "repo": "nanort",
+  "task_id": "nanort_func014",
+  "model": "mistralai/mistral-large-3-675b-instruct-2512",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "mode": "single_pass"
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 0,
+        "tool_calls_so_far": 0,
+        "tokens_so_far": 0,
+        "elapsed_time": 2.3365020751953125e-05
+      },
+      "reasoning": "Single-pass zero-shot completion (no reasoning chain)",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "type": "code_submission",
+        "code": "// Calculate extent of the bounding box\nconst T extent[3] = {\n    bmax[0] - bmin[0],\n    bmax[1] - bmin[1],\n    bmax[2] - bmin[2]\n};\n\n// Initialize minimum cost and axis\nT min_cost = std::numeric_limits<T>::max();\nint min_cost_axis = 0;\n\n// Check each axis for potential split\nfor (int axis = 0; axis < 3; ++axis) {\n    // Skip axis with zero extent\n    if (extent[axis] < std::numeric_limits<T>::epsilon()) {\n        continue;\n    }\n\n    // Calculate bin size along current axis\n    const int bin_count = bins->binSize[axis];\n    if (bin_count <= 1) {\n        continue;\n    }\n\n    // Initialize left and right bounding boxes and counts\n    StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n    StackContainer<std::vector<BBox<T>>, 32> right_bboxes;\n    StackContainer<std::vector<int>, 32> left_counts;\n    StackContainer<std::vector<int>, 32> right_counts;\n\n    left_bboxes->resize(bin_count);\n    right_bboxes->resize(bin_count);\n    left_counts->resize(bin_count, 0);\n    right_counts->resize(bin_count, 0);\n\n    // Initialize left and right bounding boxes\n    for (int i = 0; i < bin_count; ++i) {\n        left_bboxes->at(i) = BBox<T>();\n        right_bboxes->at(i) = BBox<T>();\n    }\n\n    // Calculate left and right bounding boxes and counts\n    const Bin<T>* bin_data = bins->GetBin(axis);\n    for (int i = 0; i < bin_count; ++i) {\n        const Bin<T>& bin = bin_data[i];\n        left_counts->at(i) = bin.enter;\n        right_counts->at(bin_count - 1 - i) = bin.exit;\n\n        if (i > 0) {\n            left_bboxes->at(i) = left_bboxes->at(i - 1);\n            left_bboxes->at(i).Expand(bin.bbox);\n        } else {\n            left_bboxes->at(i) = bin.bbox;\n        }\n\n        if (i < bin_count - 1) {\n            right_bboxes->at(bin_count - 1 - i) = right_bboxes->at(bin_count - i);\n            right_bboxes->at(bin_count - 1 - i).Expand(bin.bbox);\n        } else {\n            right_bboxes->at(bin_count - 1 - i) = bin.bbox;\n        }\n    }\n\n    // Calculate cost for each split plane\n    for (int i = 0; i < bin_count - 1; ++i) {\n        const int left_count = left_counts->at(i);\n        const int right_count = right_counts->at(i + 1);\n\n        if (left_count == 0 || right_count == 0) {\n            continue;\n        }\n\n        const T left_sa = left_bboxes->at(i).SurfaceArea();\n        const T right_sa = right_bboxes->at(i + 1).SurfaceArea();\n        const T total_sa = BBox<T>(bmin, bmax).SurfaceArea();\n\n        const T cost = (left_sa / total_sa) * static_cast<T>(left_count) +\n                       (right_sa / total_sa) * static_cast<T>(right_count);\n\n        if (cost < min_cost) {\n            min_cost = cost;\n            min_cost_axis = axis;\n            cut_pos[axis] = bmin[axis] + extent[axis] * (static_cast<T>(i + 1) / static_cast<T>(bin_count));\n        }\n    }\n}\n\n*minCostAxis = min_cost_axis;\n\n// Return true if a valid split was found\nreturn min_cost < std::numeric_limits<T>::max();",
+        "code_length": 2922
+      },
+      "result": {
+        "compiles": false,
+        "tests_pass": false,
+        "test_summary": "FAILED",
+        "errors": [
+          "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope",
+          "/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope",
+          "/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope",
+          "/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope",
+          "/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope",
+          "/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?",
+          "/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'",
+          "/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'",
+          "/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'",
+          "/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'"
+        ],
+        "full_test_results": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nScanning dependencies of target nanort_functions\n[  2%] Building CXX object CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o\n",
+          "stderr": "/workspace/src/nanort_functions.cpp: In function 'bool nanort::FindCutFromBinBuffer(T*, int*, nanort::BinBuffer<T>*, const nanort::real3<T>&, const nanort::real3<T>&)':\n/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope\n  237 |       StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n      |       ^~~~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:237:42: error: expected primary-expression before ',' token\n  237 |       StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n      |                                          ^\n/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope\n  237 |       StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n      |                                                ^~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:238:42: error: expected primary-expression before ',' token\n  238 |       StackContainer<std::vector<BBox<T>>, 32> right_bboxes;\n      |                                          ^\n/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope\n  238 |       StackContainer<std::vector<BBox<T>>, 32> right_bboxes;\n      |                                                ^~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:239:38: error: expected primary-expression before ',' token\n  239 |       StackContainer<std::vector<int>, 32> left_counts;\n      |                                      ^\n/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope\n  239 |       StackContainer<std::vector<int>, 32> left_counts;\n      |                                            ^~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:240:38: error: expected primary-expression before ',' token\n  240 |       StackContainer<std::vector<int>, 32> right_counts;\n      |                                      ^\n/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope\n  240 |       StackContainer<std::vector<int>, 32> right_counts;\n      |                                            ^~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp: In instantiation of 'bool nanort::FindCutFromBinBuffer(T*, int*, nanort::BinBuffer<T>*, const nanort::real3<T>&, const nanort::real3<T>&) [with T = float]':\n/workspace/src/nanort_functions.cpp:319:116:   required from here\n/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?\n  231 |       const int bin_count = bins->binSize[axis];\n      |                             ~~~~~~^~~~~~~\n      |                             bin_size\n/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'\n  254 |       const Bin<T>* bin_data = bins->GetBin(axis);\n      |                                ~~~~~~^~~~~~\n/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'\n  257 |           left_counts->at(i) = bin.enter;\n      |                                ~~~~^~~~~\n/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'\n  258 |           right_counts->at(bin_count - 1 - i) = bin.exit;\n      |                                                 ~~~~^~~~\n/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'\n  286 |           const T total_sa = BBox<T>(bmin, bmax).SurfaceArea();\n      |                              ^~~~~~~~~~~~~~~~~~~\nIn file included from /workspace/src/nanort_functions.cpp:1:\n/workspace/src/nanort_functions.h:40:5: note: candidate: 'nanort::BBox<T>::BBox() [with T = float]'\n   40 |     BBox() {\n      |     ^~~~\n/workspace/src/nanort_functions.h:40:5: note:   candidate expects 0 arguments, 2 provided\n/workspace/src/nanort_functions.h:35:7: note: candidate: 'constexpr nanort::BBox<float>::BBox(const nanort::BBox<float>&)'\n   35 | class BBox {\n      |       ^~~~\n/workspace/src/nanort_functions.h:35:7: note:   candidate expects 1 argument, 2 provided\n/workspace/src/nanort_functions.h:35:7: note: candidate: 'constexpr nanort::BBox<float>::BBox(nanort::BBox<float>&&)'\n/workspace/src/nanort_functions.h:35:7: note:   candidate expects 1 argument, 2 provided\nmake[2]: *** [CMakeFiles/nanort_functions.dir/build.make:63: CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:216: CMakeFiles/nanort_functions.dir/all] Error 2\nmake: *** [Makefile:95: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?",
+            "/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'",
+            "/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'",
+            "/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'",
+            "/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'"
+          ],
+          "logs": [
+            "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:237:42: error: expected primary-expression before ',' token",
+            "/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:238:42: error: expected primary-expression before ',' token",
+            "/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:239:38: error: expected primary-expression before ',' token",
+            "/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:240:38: error: expected primary-expression before ',' token",
+            "/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope",
+            "/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?",
+            "/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'",
+            "/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'",
+            "/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'",
+            "/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 52.63620400428772,
+      "tokens_used": 4281,
+      "token_breakdown": {
+        "completion_tokens": 860,
+        "prompt_tokens": 3421,
+        "total_tokens": 4281
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "// Calculate extent of the bounding box\nconst T extent[3] = {\n    bmax[0] - bmin[0],\n    bmax[1] - bmin[1],\n    bmax[2] - bmin[2]\n};\n\n// Initialize minimum cost and axis\nT min_cost = std::numeric_limits<T>::max();\nint min_cost_axis = 0;\n\n// Check each axis for potential split\nfor (int axis = 0; axis < 3; ++axis) {\n    // Skip axis with zero extent\n    if (extent[axis] < std::numeric_limits<T>::epsilon()) {\n        continue;\n    }\n\n    // Calculate bin size along current axis\n    const int bin_count = bins->binSize[axis];\n    if (bin_count <= 1) {\n        continue;\n    }\n\n    // Initialize left and right bounding boxes and counts\n    StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n    StackContainer<std::vector<BBox<T>>, 32> right_bboxes;\n    StackContainer<std::vector<int>, 32> left_counts;\n    StackContainer<std::vector<int>, 32> right_counts;\n\n    left_bboxes->resize(bin_count);\n    right_bboxes->resize(bin_count);\n    left_counts->resize(bin_count, 0);\n    right_counts->resize(bin_count, 0);\n\n    // Initialize left and right bounding boxes\n    for (int i = 0; i < bin_count; ++i) {\n        left_bboxes->at(i) = BBox<T>();\n        right_bboxes->at(i) = BBox<T>();\n    }\n\n    // Calculate left and right bounding boxes and counts\n    const Bin<T>* bin_data = bins->GetBin(axis);\n    for (int i = 0; i < bin_count; ++i) {\n        const Bin<T>& bin = bin_data[i];\n        left_counts->at(i) = bin.enter;\n        right_counts->at(bin_count - 1 - i) = bin.exit;\n\n        if (i > 0) {\n            left_bboxes->at(i) = left_bboxes->at(i - 1);\n            left_bboxes->at(i).Expand(bin.bbox);\n        } else {\n            left_bboxes->at(i) = bin.bbox;\n        }\n\n        if (i < bin_count - 1) {\n            right_bboxes->at(bin_count - 1 - i) = right_bboxes->at(bin_count - i);\n            right_bboxes->at(bin_count - 1 - i).Expand(bin.bbox);\n        } else {\n            right_bboxes->at(bin_count - 1 - i) = bin.bbox;\n        }\n    }\n\n    // Calculate cost for each split plane\n    for (int i = 0; i < bin_count - 1; ++i) {\n        const int left_count = left_counts->at(i);\n        const int right_count = right_counts->at(i + 1);\n\n        if (left_count == 0 || right_count == 0) {\n            continue;\n        }\n\n        const T left_sa = left_bboxes->at(i).SurfaceArea();\n        const T right_sa = right_bboxes->at(i + 1).SurfaceArea();\n        const T total_sa = BBox<T>(bmin, bmax).SurfaceArea();\n\n        const T cost = (left_sa / total_sa) * static_cast<T>(left_count) +\n                       (right_sa / total_sa) * static_cast<T>(right_count);\n\n        if (cost < min_cost) {\n            min_cost = cost;\n            min_cost_axis = axis;\n            cut_pos[axis] = bmin[axis] + extent[axis] * (static_cast<T>(i + 1) / static_cast<T>(bin_count));\n        }\n    }\n}\n\n*minCostAxis = min_cost_axis;\n\n// Return true if a valid split was found\nreturn min_cost < std::numeric_limits<T>::max();",
+    "compiled": false,
+    "compile_error": "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope\n/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope\n/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope\n/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope\n/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope\n/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?\n/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'\n/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'\n/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'\n/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'",
+    "failure_category": "compilation_error",
+    "compile_attempts": 1,
+    "last_compile_errors": [
+      "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?",
+      "/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'",
+      "/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'",
+      "/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'",
+      "/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'"
+    ],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 1,
+    "total_tool_calls": 0,
+    "tokens_used": 4281,
+    "wall_clock_sec": 52.63620400428772,
+    "stop_reason": "single_pass_complete"
+  },
+  "test_results": {
+    "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nScanning dependencies of target nanort_functions\n[  2%] Building CXX object CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o\n",
+    "stderr": "/workspace/src/nanort_functions.cpp: In function 'bool nanort::FindCutFromBinBuffer(T*, int*, nanort::BinBuffer<T>*, const nanort::real3<T>&, const nanort::real3<T>&)':\n/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope\n  237 |       StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n      |       ^~~~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:237:42: error: expected primary-expression before ',' token\n  237 |       StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n      |                                          ^\n/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope\n  237 |       StackContainer<std::vector<BBox<T>>, 32> left_bboxes;\n      |                                                ^~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:238:42: error: expected primary-expression before ',' token\n  238 |       StackContainer<std::vector<BBox<T>>, 32> right_bboxes;\n      |                                          ^\n/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope\n  238 |       StackContainer<std::vector<BBox<T>>, 32> right_bboxes;\n      |                                                ^~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:239:38: error: expected primary-expression before ',' token\n  239 |       StackContainer<std::vector<int>, 32> left_counts;\n      |                                      ^\n/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope\n  239 |       StackContainer<std::vector<int>, 32> left_counts;\n      |                                            ^~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:240:38: error: expected primary-expression before ',' token\n  240 |       StackContainer<std::vector<int>, 32> right_counts;\n      |                                      ^\n/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope\n  240 |       StackContainer<std::vector<int>, 32> right_counts;\n      |                                            ^~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp: In instantiation of 'bool nanort::FindCutFromBinBuffer(T*, int*, nanort::BinBuffer<T>*, const nanort::real3<T>&, const nanort::real3<T>&) [with T = float]':\n/workspace/src/nanort_functions.cpp:319:116:   required from here\n/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?\n  231 |       const int bin_count = bins->binSize[axis];\n      |                             ~~~~~~^~~~~~~\n      |                             bin_size\n/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'\n  254 |       const Bin<T>* bin_data = bins->GetBin(axis);\n      |                                ~~~~~~^~~~~~\n/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'\n  257 |           left_counts->at(i) = bin.enter;\n      |                                ~~~~^~~~~\n/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'\n  258 |           right_counts->at(bin_count - 1 - i) = bin.exit;\n      |                                                 ~~~~^~~~\n/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'\n  286 |           const T total_sa = BBox<T>(bmin, bmax).SurfaceArea();\n      |                              ^~~~~~~~~~~~~~~~~~~\nIn file included from /workspace/src/nanort_functions.cpp:1:\n/workspace/src/nanort_functions.h:40:5: note: candidate: 'nanort::BBox<T>::BBox() [with T = float]'\n   40 |     BBox() {\n      |     ^~~~\n/workspace/src/nanort_functions.h:40:5: note:   candidate expects 0 arguments, 2 provided\n/workspace/src/nanort_functions.h:35:7: note: candidate: 'constexpr nanort::BBox<float>::BBox(const nanort::BBox<float>&)'\n   35 | class BBox {\n      |       ^~~~\n/workspace/src/nanort_functions.h:35:7: note:   candidate expects 1 argument, 2 provided\n/workspace/src/nanort_functions.h:35:7: note: candidate: 'constexpr nanort::BBox<float>::BBox(nanort::BBox<float>&&)'\n/workspace/src/nanort_functions.h:35:7: note:   candidate expects 1 argument, 2 provided\nmake[2]: *** [CMakeFiles/nanort_functions.dir/build.make:63: CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:216: CMakeFiles/nanort_functions.dir/all] Error 2\nmake: *** [Makefile:95: all] Error 2\n",
+    "returncode": 2,
+    "errors": [
+      "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?",
+      "/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'",
+      "/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'",
+      "/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'",
+      "/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'"
+    ],
+    "logs": [
+      "/workspace/src/nanort_functions.cpp:237:7: error: 'StackContainer' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:237:42: error: expected primary-expression before ',' token",
+      "/workspace/src/nanort_functions.cpp:237:48: error: 'left_bboxes' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:238:42: error: expected primary-expression before ',' token",
+      "/workspace/src/nanort_functions.cpp:238:48: error: 'right_bboxes' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:239:38: error: expected primary-expression before ',' token",
+      "/workspace/src/nanort_functions.cpp:239:44: error: 'left_counts' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:240:38: error: expected primary-expression before ',' token",
+      "/workspace/src/nanort_functions.cpp:240:44: error: 'right_counts' was not declared in this scope",
+      "/workspace/src/nanort_functions.cpp:231:35: error: 'struct nanort::BinBuffer<float>' has no member named 'binSize'; did you mean 'bin_size'?",
+      "/workspace/src/nanort_functions.cpp:254:38: error: 'struct nanort::BinBuffer<float>' has no member named 'GetBin'",
+      "/workspace/src/nanort_functions.cpp:257:36: error: 'const struct nanort::Bin<float>' has no member named 'enter'",
+      "/workspace/src/nanort_functions.cpp:258:53: error: 'const struct nanort::Bin<float>' has no member named 'exit'",
+      "/workspace/src/nanort_functions.cpp:286:30: error: no matching function for call to 'nanort::BBox<float>::BBox(const nanort::real3<float>&, const nanort::real3<float>&)'"
+    ]
+  },
+  "passed_tests": false
+}

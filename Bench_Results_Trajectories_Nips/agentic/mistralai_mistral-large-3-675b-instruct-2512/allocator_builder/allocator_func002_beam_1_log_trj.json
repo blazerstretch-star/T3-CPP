@@ -1,0 +1,390 @@
+{
+  "repo": "allocator_builder",
+  "task_id": "allocator_func002",
+  "model": "mistralai/mistral-large-3-675b-instruct-2512",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "max_iterations": 12,
+    "max_tool_calls": 36,
+    "max_time": 600,
+    "max_tokens": 100000,
+    "max_tokens_per_turn": 7000,
+    "tool_call_limit_per_iteration": 4,
+    "disable_compression": true
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 1,
+        "tool_calls_so_far": 0,
+        "tokens_so_far": 300,
+        "elapsed_time": 107.52503776550293
+      },
+      "reasoning": "Before implementing the function, I need to understand the expected behavior and the structure of the `block` type. The function should:\n\n1. **Align the stack pointer (`p`)** to the requested alignment boundary.\n2. **Check if there is enough space** in the buffer (`data` to `data + max_size`) to allocate `n` bytes after alignment.\n3. **Update the stack pointer (`p`)** to point to the end of the allocated block if space is available.\n4. **Return a `block`** containing the aligned pointer and the aligned size, or an empty block if allocation fails.\n\n### Key Questions:\n1. What is the definition of the `block` type? Does it contain a `void*` or `char*` for the pointer, and a `size_t` for the size?\n2. Are there any existing patterns in the codebase for alignment calculations or stack allocation?\n3. Should the function return an empty block (e.g., `{nullptr, 0}`) if allocation fails?\n\nI will search the codebase for the `block` type definition and any existing alignment or stack allocation patterns.",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "type": "multi_tool_call",
+        "tools": [
+          {
+            "tool": "search_repo_code",
+            "args": {
+              "query": "struct block",
+              "max_results": 5
+            },
+            "tool_call_id": "23rSE26by"
+          },
+          {
+            "tool": "search_repo_code",
+            "args": {
+              "query": "alignment.*stack.*allocate",
+              "max_results": 5
+            },
+            "tool_call_id": "zdAug90xE"
+          },
+          {
+            "tool": "search_repo_code",
+            "args": {
+              "query": "align.*char.*pointer",
+              "max_results": 5
+            },
+            "tool_call_id": "xTQHP3VDV"
+          }
+        ]
+      },
+      "result": {
+        "type": "multi_tool_result",
+        "results": [
+          {
+            "llm_view": [
+              {
+                "file": "stack_allocator_functions.cpp",
+                "snippet": "   4 | \n   5 | namespace alb {\n   6 | \n   7 | struct block {\n   8 |     void* ptr = nullptr;\n   9 |     size_t length = 0;\n  10 |     explicit operator bool() const { return ptr != nullptr; }"
+              },
+              {
+                "file": "AllocatorBuilder/alb/heap.hpp",
+                "snippet": " 260 |         deallocate_all();\n 261 |       }\n 262 | \n 263 |       struct BlockContext \n 264 |       {\n 265 |         int registerIndex;\n 266 |         int subIndex;"
+              },
+              {
+                "file": "AllocatorBuilder/alb/shared_heap.hpp",
+                "snippet": " 274 |         deallocate_all();\n 275 |       }\n 276 | \n 277 |       struct BlockContext \n 278 |       {\n 279 |         int registerIndex;\n 280 |         int subIndex;"
+              },
+              {
+                "file": "AllocatorBuilder/alb/internal/block.hpp",
+                "snippet": "   6 | namespace alb {\n   7 |   inline namespace v_100 {\n   8 | \n   9 |     struct block {\n  10 |       block() noexcept\n  11 |         : ptr(nullptr)\n  12 |         , length(0)"
+              }
+            ],
+            "full_result": [
+              {
+                "file": "stack_allocator_functions.cpp",
+                "snippet": "   4 | \n   5 | namespace alb {\n   6 | \n   7 | struct block {\n   8 |     void* ptr = nullptr;\n   9 |     size_t length = 0;\n  10 |     explicit operator bool() const { return ptr != nullptr; }"
+              },
+              {
+                "file": "AllocatorBuilder/alb/heap.hpp",
+                "snippet": " 260 |         deallocate_all();\n 261 |       }\n 262 | \n 263 |       struct BlockContext \n 264 |       {\n 265 |         int registerIndex;\n 266 |         int subIndex;"
+              },
+              {
+                "file": "AllocatorBuilder/alb/shared_heap.hpp",
+                "snippet": " 274 |         deallocate_all();\n 275 |       }\n 276 | \n 277 |       struct BlockContext \n 278 |       {\n 279 |         int registerIndex;\n 280 |         int subIndex;"
+              },
+              {
+                "file": "AllocatorBuilder/alb/internal/block.hpp",
+                "snippet": "   6 | namespace alb {\n   7 |   inline namespace v_100 {\n   8 | \n   9 |     struct block {\n  10 |       block() noexcept\n  11 |         : ptr(nullptr)\n  12 |         , length(0)"
+              }
+            ]
+          },
+          {
+            "llm_view": [],
+            "full_result": []
+          },
+          {
+            "llm_view": [],
+            "full_result": []
+          }
+        ]
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 107.37036895751953,
+      "tokens_used": 300,
+      "token_breakdown": {
+        "completion_tokens": 300,
+        "prompt_tokens": 2445,
+        "total_tokens": 2745,
+        "reasoning_tokens": 251,
+        "tool_calls_count": 3
+      },
+      "is_thinking_model": false
+    },
+    {
+      "step_id": 2,
+      "state": {
+        "iteration": 2,
+        "tool_calls_so_far": 3,
+        "tokens_so_far": 884,
+        "elapsed_time": 364.1341872215271
+      },
+      "reasoning": "The `block` type is confirmed to have two fields:\n- `void* ptr`: A pointer to the allocated block.\n- `size_t length`: The size of the allocated block.\n\nThe function must:\n1. Align the current stack pointer (`p`) to the requested alignment boundary.\n2. Check if the remaining space in the buffer (`data` to `data + max_size`) can accommodate the requested size (`n`) after alignment.\n3. If space is available, update the stack pointer (`p`) to point to the end of the allocated block and return a `block` with the aligned pointer and size.\n4. If space is insufficient, return an empty `block` (`{nullptr, 0}`).\n\n### Alignment Calculation\nTo align a pointer `p` to an `alignment` boundary, we can use:\n\nThis ensures the address is rounded up to the nearest multiple of `alignment`.\n\n### Space Check\nAfter alignment, we must ensure that:\n\n\n### Implementation Plan\n1. Calculate the aligned address.\n2. Check if the aligned address + `n` exceeds the buffer bounds.\n3. If it does, return `{nullptr, 0}`.\n4. Otherwise, update `p` to `reinterpret_cast<char*>(aligned_address + n)` and return `{reinterpret_cast<void*>(aligned_address), n}`.\n\nHere is the implementation:",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "tool": "test_code_snippet",
+        "args": {
+          "code": "#include <cstddef> // for size_t\n#include <cstdint> // for uintptr_t\n\nstruct block {\n    void* ptr;\n    size_t length;\n    explicit operator bool() const { return ptr != nullptr; }\n};\n\nblock allocate(char*& p, const char* data, size_t max_size, size_t alignment, size_t n) {\n    // Calculate the aligned address\n    uintptr_t raw_address = reinterpret_cast<uintptr_t>(p);\n    uintptr_t aligned_address = (raw_address + alignment - 1) & ~(alignment - 1);\n    \n    // Check if the aligned block fits in the buffer\n    if (aligned_address + n > reinterpret_cast<uintptr_t>(data) + max_size) {\n        return {nullptr, 0};\n    }\n    \n    // Update the stack pointer and return the block\n    p = reinterpret_cast<char*>(aligned_address + n);\n    return {reinterpret_cast<void*>(aligned_address), n};\n}"
+        },
+        "tool_call_id": "mqpJ1l9if"
+      },
+      "result": {
+        "llm_view": {
+          "compiles": false,
+          "tests_pass": false,
+          "test_summary": "FAILED",
+          "errors": []
+        },
+        "full_result": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace\nConsolidate compiler generated dependencies of target allocator_functions\n[  5%] Building CXX object CMakeFiles/allocator_functions.dir/src/allocator_functions.cpp.o\n",
+          "stderr": "/workspace/src/allocator_functions.cpp: In function 'alb::block alb::stack_allocator_impl::allocate(char*&, const char*, size_t, size_t, size_t)':\n/workspace/src/allocator_functions.cpp:46:91: error: a function-definition is not allowed here before '{' token\n   46 |   block allocate(char*& p, const char* data, size_t max_size, size_t alignment, size_t n) {\n      |                                                                                           ^\n/workspace/src/allocator_functions.cpp:61:1: warning: no return statement in function returning non-void [-Wreturn-type]\n   61 | }\n      | ^\nmake[2]: *** [CMakeFiles/allocator_functions.dir/build.make:76: CMakeFiles/allocator_functions.dir/src/allocator_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:99: CMakeFiles/allocator_functions.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/allocator_functions.cpp:46:91: error: a function-definition is not allowed here before '{' token"
+          ],
+          "logs": [
+            "/workspace/src/allocator_functions.cpp:46:91: error: a function-definition is not allowed here before '{' token"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 254.97152066230774,
+      "tokens_used": 584,
+      "token_breakdown": {
+        "completion_tokens": 584,
+        "prompt_tokens": 3558,
+        "total_tokens": 4142,
+        "reasoning_tokens": 290,
+        "tool_calls_count": 1
+      },
+      "is_thinking_model": false
+    },
+    {
+      "step_id": 3,
+      "state": {
+        "iteration": 3,
+        "tool_calls_so_far": 4,
+        "tokens_so_far": 1428,
+        "elapsed_time": 548.9234549999237
+      },
+      "reasoning": "The test compilation failed, but no specific errors were provided. This suggests that the `block` type or other dependencies might not be properly included or defined in the test environment. However, based on the earlier search results, the `block` type is defined in the `alb` namespace, and the function is in the `alb::stack_allocator_impl::allocate` namespace.\n\n### Adjustments:\n1. **Namespace**: The `block` type is in the `alb` namespace, so we must qualify it as `alb::block`.\n2. **Alignment Handling**: Ensure the alignment is a power of two, as required by the bitwise alignment calculation.\n3. **Edge Cases**: Handle `n = 0` and `alignment = 0` gracefully.\n\nHere is the corrected implementation:",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "tool": "test_code_snippet",
+        "args": {
+          "code": "#include <cstddef> // for size_t\n#include <cstdint> // for uintptr_t\n\nnamespace alb {\n    struct block {\n        void* ptr;\n        size_t length;\n        explicit operator bool() const { return ptr != nullptr; }\n    };\n}\n\nnamespace alb::stack_allocator_impl {\n    block allocate(char*& p, const char* data, size_t max_size, size_t alignment, size_t n) {\n        // Handle zero-size allocation\n        if (n == 0) {\n            return {nullptr, 0};\n        }\n        \n        // Handle zero alignment (treat as 1)\n        if (alignment == 0) {\n            alignment = 1;\n        }\n        \n        // Ensure alignment is a power of two\n        if ((alignment & (alignment - 1)) != 0) {\n            return {nullptr, 0};\n        }\n        \n        // Calculate the aligned address\n        uintptr_t raw_address = reinterpret_cast<uintptr_t>(p);\n        uintptr_t aligned_address = (raw_address + alignment - 1) & ~(alignment - 1);\n        \n        // Check if the aligned block fits in the buffer\n        if (aligned_address + n > reinterpret_cast<uintptr_t>(data) + max_size) {\n            return {nullptr, 0};\n        }\n        \n        // Update the stack pointer and return the block\n        p = reinterpret_cast<char*>(aligned_address + n);\n        return {reinterpret_cast<void*>(aligned_address), n};\n    }\n}"
+        },
+        "tool_call_id": "SBpj5JdqD"
+      },
+      "result": {
+        "llm_view": {
+          "compiles": false,
+          "tests_pass": false,
+          "test_summary": "FAILED",
+          "errors": [
+            "/workspace/src/allocator_functions.cpp:40:3: error: 'namespace' definition is not allowed here",
+            "/workspace/src/allocator_functions.cpp:48:18: error: 'stack_allocator_impl' is not a namespace-name"
+          ]
+        },
+        "full_result": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace\nConsolidate compiler generated dependencies of target allocator_functions\n[  5%] Building CXX object CMakeFiles/allocator_functions.dir/src/allocator_functions.cpp.o\n",
+          "stderr": "/workspace/src/allocator_functions.cpp: In function 'alb::block alb::stack_allocator_impl::allocate(char*&, const char*, size_t, size_t, size_t)':\n/workspace/src/allocator_functions.cpp:40:3: error: 'namespace' definition is not allowed here\n   40 |   namespace alb {\n      |   ^~~~~~~~~\n/workspace/src/allocator_functions.cpp:48:16: error: expected '=' before '::' token\n   48 |   namespace alb::stack_allocator_impl {\n      |                ^~\n/workspace/src/allocator_functions.cpp:48:18: error: 'stack_allocator_impl' is not a namespace-name\n   48 |   namespace alb::stack_allocator_impl {\n      |                  ^~~~~~~~~~~~~~~~~~~~\n/workspace/src/allocator_functions.cpp:48:38: error: expected ';' before '{' token\n   48 |   namespace alb::stack_allocator_impl {\n      |                                      ^~\n      |                                      ;\n/workspace/src/allocator_functions.cpp:49:95: error: a function-definition is not allowed here before '{' token\n   49 |       block allocate(char*& p, const char* data, size_t max_size, size_t alignment, size_t n) {\n      |                                                                                               ^\n/workspace/src/allocator_functions.cpp:80:1: warning: no return statement in function returning non-void [-Wreturn-type]\n   80 | }\n      | ^\nmake[2]: *** [CMakeFiles/allocator_functions.dir/build.make:76: CMakeFiles/allocator_functions.dir/src/allocator_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:99: CMakeFiles/allocator_functions.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/allocator_functions.cpp:40:3: error: 'namespace' definition is not allowed here",
+            "/workspace/src/allocator_functions.cpp:48:18: error: 'stack_allocator_impl' is not a namespace-name"
+          ],
+          "logs": [
+            "/workspace/src/allocator_functions.cpp:40:3: error: 'namespace' definition is not allowed here",
+            "/workspace/src/allocator_functions.cpp:48:16: error: expected '=' before '::' token",
+            "/workspace/src/allocator_functions.cpp:48:18: error: 'stack_allocator_impl' is not a namespace-name",
+            "/workspace/src/allocator_functions.cpp:48:38: error: expected ';' before '{' token",
+            "/workspace/src/allocator_functions.cpp:49:95: error: a function-definition is not allowed here before '{' token"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 183.12535738945007,
+      "tokens_used": 544,
+      "token_breakdown": {
+        "completion_tokens": 544,
+        "prompt_tokens": 4171,
+        "total_tokens": 4715,
+        "reasoning_tokens": 176,
+        "tool_calls_count": 1
+      },
+      "is_thinking_model": false
+    },
+    {
+      "step_id": 4,
+      "state": {
+        "iteration": 4,
+        "tool_calls_so_far": 5,
+        "tokens_so_far": 1907,
+        "elapsed_time": 1513.8943767547607
+      },
+      "reasoning": "The errors indicate that the test environment does not recognize `stack_allocator_impl` as a namespace, and namespace definitions are not allowed in the test snippet. This suggests that the function is expected to be implemented directly, without nested namespace declarations, and the `block` type is already available in the correct namespace.\n\n### Revised Approach:\n1. **Remove namespace declarations**: The function signature is already provided in the correct namespace (`alb::stack_allocator_impl::allocate`), so we don't need to redeclare it.\n2. **Use the `block` type directly**: Assume it is already defined in the `alb` namespace.\n3. **Focus on the core logic**: Implement the alignment, bounds checking, and stack pointer update.\n\nHere is the corrected implementation:",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "tool": "forced_final_answer",
+        "args": {}
+      },
+      "result": {
+        "llm_view": "```cpp\n    // Handle zero-size allocation\n    if (n == 0) {\n        return {nullptr, 0};\n    }\n\n    // Handle zero alignment (treat as 1)\n    if (alignment == 0) {\n        alignment = 1;\n    }\n\n    // Ensure alignment is a power of two\n    if ((alignment & (alignment - 1)) != 0) {\n        return {nullptr, 0};\n    }\n\n    // Calculate the aligned address\n    uintptr_t raw_address = reinterpret_cast<uintptr_t>(p);\n    uintptr_t aligned_address = (raw_address + alignment - 1) & ~(alignment - 1);\n\n    // Check if the aligned block fits in the buffer\n    if (aligned_address + n > reinterpret_cast<uintptr_t>(data) + max_size) {\n        return {nullptr, 0};\n    }\n\n    // Update the stack pointer and return the block\n    p = reinterpret_cast<char*>(aligned_address + n);\n    return {reinterpret_cast<void*>(aligned_address), n};\n```",
+        "full_result": {
+          "role": "assistant",
+          "content": "```cpp\n    // Handle zero-size allocation\n    if (n == 0) {\n        return {nullptr, 0};\n    }\n\n    // Handle zero alignment (treat as 1)\n    if (alignment == 0) {\n        alignment = 1;\n    }\n\n    // Ensure alignment is a power of two\n    if ((alignment & (alignment - 1)) != 0) {\n        return {nullptr, 0};\n    }\n\n    // Calculate the aligned address\n    uintptr_t raw_address = reinterpret_cast<uintptr_t>(p);\n    uintptr_t aligned_address = (raw_address + alignment - 1) & ~(alignment - 1);\n\n    // Check if the aligned block fits in the buffer\n    if (aligned_address + n > reinterpret_cast<uintptr_t>(data) + max_size) {\n        return {nullptr, 0};\n    }\n\n    // Update the stack pointer and return the block\n    p = reinterpret_cast<char*>(aligned_address + n);\n    return {reinterpret_cast<void*>(aligned_address), n};\n```",
+          "refusal": null,
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": [],
+          "reasoning": null,
+          "reasoning_content": null,
+          "usage": {
+            "prompt_tokens": 3919,
+            "total_tokens": 4143,
+            "completion_tokens": 224,
+            "prompt_tokens_details": null
+          }
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 182.68117117881775,
+      "tokens_used": 224,
+      "token_breakdown": {
+        "completion_tokens": 224,
+        "prompt_tokens": 3919,
+        "total_tokens": 4143,
+        "reasoning_tokens": 194
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "// Handle zero-size allocation\n    if (n == 0) {\n        return {nullptr, 0};\n    }\n\n    // Handle zero alignment (treat as 1)\n    if (alignment == 0) {\n        alignment = 1;\n    }\n\n    // Ensure alignment is a power of two\n    if ((alignment & (alignment - 1)) != 0) {\n        return {nullptr, 0};\n    }\n\n    // Calculate the aligned address\n    uintptr_t raw_address = reinterpret_cast<uintptr_t>(p);\n    uintptr_t aligned_address = (raw_address + alignment - 1) & ~(alignment - 1);\n\n    // Check if the aligned block fits in the buffer\n    if (aligned_address + n > reinterpret_cast<uintptr_t>(data) + max_size) {\n        return {nullptr, 0};\n    }\n\n    // Update the stack pointer and return the block\n    p = reinterpret_cast<char*>(aligned_address + n);\n    return {reinterpret_cast<void*>(aligned_address), n};",
+    "compiled": true,
+    "compile_error": null,
+    "failure_category": "logic_error",
+    "compile_attempts": 3,
+    "last_compile_errors": [
+      "[ 16%] Linking CXX executable test_stack_owns",
+      "[ 22%] Built target test_stack_owns",
+      "[ 27%] Linking CXX executable test_stack_allocate",
+      "[ 33%] Built target test_stack_allocate",
+      "[ 38%] Linking CXX executable test_stack_deallocate",
+      "[ 44%] Built target test_stack_deallocate",
+      "[ 50%] Linking CXX executable test_stack_reallocate",
+      "[ 55%] Built target test_stack_reallocate",
+      "[ 61%] Linking CXX executable test_owns",
+      "[ 66%] Built target test_owns",
+      "[ 72%] Linking CXX executable test_allocate",
+      "[ 77%] Built target test_allocate",
+      "[ 83%] Linking CXX executable test_deallocate",
+      "[ 88%] Built target test_deallocate",
+      "[ 94%] Linking CXX executable test_reallocate",
+      "[100%] Built target test_reallocate",
+      "test_stack_allocate: /workspace/tests/test_stack_allocate.cpp:53: main()::<lambda(const alb::block&, size_t, size_t)>: Assertion `b.length % alignment == 0 && \"Allocated block length must be multiple of alignment\"' failed.",
+      "test_allocate: /workspace/tests/test_allocate.cpp:21: int main(): Assertion `b.length == 16 && \"Rounded to alignment\"' failed.",
+      "test_deallocate: /workspace/tests/test_deallocate.cpp:23: int main(): Assertion `p == static_cast<char*>(b1.ptr) + b1.length && \"Last block reclaimed\"' failed.",
+      "63% tests passed, 3 tests failed out of 8",
+      "The following tests FAILED:"
+    ],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 4,
+    "total_tool_calls": 6,
+    "tokens_used": 1907,
+    "wall_clock_sec": 1513.8949246406555,
+    "stop_reason": "timeout"
+  },
+  "test_results": {
+    "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace\nConsolidate compiler generated dependencies of target allocator_functions\n[  5%] Building CXX object CMakeFiles/allocator_functions.dir/src/allocator_functions.cpp.o\n[ 11%] Linking CXX static library liballocator_functions.a\n[ 11%] Built target allocator_functions\nConsolidate compiler generated dependencies of target test_stack_owns\n[ 16%] Linking CXX executable test_stack_owns\n[ 22%] Built target test_stack_owns\nConsolidate compiler generated dependencies of target test_stack_allocate\n[ 27%] Linking CXX executable test_stack_allocate\n[ 33%] Built target test_stack_allocate\nConsolidate compiler generated dependencies of target test_stack_deallocate\n[ 38%] Linking CXX executable test_stack_deallocate\n[ 44%] Built target test_stack_deallocate\nConsolidate compiler generated dependencies of target test_stack_reallocate\n[ 50%] Linking CXX executable test_stack_reallocate\n[ 55%] Built target test_stack_reallocate\nConsolidate compiler generated dependencies of target test_owns\n[ 61%] Linking CXX executable test_owns\n[ 66%] Built target test_owns\nConsolidate compiler generated dependencies of target test_allocate\n[ 72%] Linking CXX executable test_allocate\n[ 77%] Built target test_allocate\nConsolidate compiler generated dependencies of target test_deallocate\n[ 83%] Linking CXX executable test_deallocate\n[ 88%] Built target test_deallocate\nConsolidate compiler generated dependencies of target test_reallocate\n[ 94%] Linking CXX executable test_reallocate\n[100%] Built target test_reallocate\nTest project /workspace\n    Start 1: test_stack_owns\n1/8 Test #1: test_stack_owns ..................   Passed    0.00 sec\n    Start 2: test_stack_allocate\n2/8 Test #2: test_stack_allocate ..............Subprocess aborted***Exception:   0.12 sec\ntest_stack_allocate: /workspace/tests/test_stack_allocate.cpp:53: main()::<lambda(const alb::block&, size_t, size_t)>: Assertion `b.length % alignment == 0 && \"Allocated block length must be multiple of alignment\"' failed.\n\n    Start 3: test_stack_deallocate\n3/8 Test #3: test_stack_deallocate ............   Passed    0.00 sec\n    Start 4: test_stack_reallocate\n4/8 Test #4: test_stack_reallocate ............   Passed    0.00 sec\n    Start 5: test_owns\n5/8 Test #5: test_owns ........................   Passed    0.00 sec\n    Start 6: test_allocate\n6/8 Test #6: test_allocate ....................Subprocess aborted***Exception:   0.14 sec\ntest_allocate: /workspace/tests/test_allocate.cpp:21: int main(): Assertion `b.length == 16 && \"Rounded to alignment\"' failed.\n\n    Start 7: test_deallocate\n7/8 Test #7: test_deallocate ..................Subprocess aborted***Exception:   0.14 sec\ntest_deallocate: /workspace/tests/test_deallocate.cpp:23: int main(): Assertion `p == static_cast<char*>(b1.ptr) + b1.length && \"Last block reclaimed\"' failed.\n\n    Start 8: test_reallocate\n8/8 Test #8: test_reallocate ..................   Passed    0.00 sec\n\n63% tests passed, 3 tests failed out of 8\n\nTotal Test time (real) =   0.42 sec\n\nThe following tests FAILED:\n\t  2 - test_stack_allocate (Subprocess aborted)\n\t  6 - test_allocate (Subprocess aborted)\n\t  7 - test_deallocate (Subprocess aborted)\n",
+    "stderr": "Errors while running CTest\n",
+    "returncode": 8,
+    "errors": [
+      "[ 16%] Linking CXX executable test_stack_owns",
+      "[ 22%] Built target test_stack_owns",
+      "[ 27%] Linking CXX executable test_stack_allocate",
+      "[ 33%] Built target test_stack_allocate",
+      "[ 38%] Linking CXX executable test_stack_deallocate",
+      "[ 44%] Built target test_stack_deallocate",
+      "[ 50%] Linking CXX executable test_stack_reallocate",
+      "[ 55%] Built target test_stack_reallocate",
+      "[ 61%] Linking CXX executable test_owns",
+      "[ 66%] Built target test_owns",
+      "[ 72%] Linking CXX executable test_allocate",
+      "[ 77%] Built target test_allocate",
+      "[ 83%] Linking CXX executable test_deallocate",
+      "[ 88%] Built target test_deallocate",
+      "[ 94%] Linking CXX executable test_reallocate",
+      "[100%] Built target test_reallocate",
+      "test_stack_allocate: /workspace/tests/test_stack_allocate.cpp:53: main()::<lambda(const alb::block&, size_t, size_t)>: Assertion `b.length % alignment == 0 && \"Allocated block length must be multiple of alignment\"' failed.",
+      "test_allocate: /workspace/tests/test_allocate.cpp:21: int main(): Assertion `b.length == 16 && \"Rounded to alignment\"' failed.",
+      "test_deallocate: /workspace/tests/test_deallocate.cpp:23: int main(): Assertion `p == static_cast<char*>(b1.ptr) + b1.length && \"Last block reclaimed\"' failed.",
+      "63% tests passed, 3 tests failed out of 8",
+      "The following tests FAILED:"
+    ],
+    "logs": [
+      "[ 16%] Linking CXX executable test_stack_owns",
+      "[ 22%] Built target test_stack_owns",
+      "[ 27%] Linking CXX executable test_stack_allocate",
+      "[ 33%] Built target test_stack_allocate",
+      "[ 38%] Linking CXX executable test_stack_deallocate",
+      "[ 44%] Built target test_stack_deallocate",
+      "[ 50%] Linking CXX executable test_stack_reallocate",
+      "[ 55%] Built target test_stack_reallocate",
+      "[ 61%] Linking CXX executable test_owns",
+      "[ 66%] Built target test_owns",
+      "[ 72%] Linking CXX executable test_allocate",
+      "[ 77%] Built target test_allocate",
+      "[ 83%] Linking CXX executable test_deallocate",
+      "[ 88%] Built target test_deallocate",
+      "[ 94%] Linking CXX executable test_reallocate",
+      "[100%] Built target test_reallocate",
+      "test_stack_allocate: /workspace/tests/test_stack_allocate.cpp:53: main()::<lambda(const alb::block&, size_t, size_t)>: Assertion `b.length % alignment == 0 && \"Allocated block length must be multiple of alignment\"' failed.",
+      "test_allocate: /workspace/tests/test_allocate.cpp:21: int main(): Assertion `b.length == 16 && \"Rounded to alignment\"' failed.",
+      "test_deallocate: /workspace/tests/test_deallocate.cpp:23: int main(): Assertion `p == static_cast<char*>(b1.ptr) + b1.length && \"Last block reclaimed\"' failed.",
+      "63% tests passed, 3 tests failed out of 8",
+      "The following tests FAILED:"
+    ]
+  },
+  "passed_tests": false,
+  "test_failures": [
+    "[ 16%] Linking CXX executable test_stack_owns",
+    "[ 22%] Built target test_stack_owns",
+    "[ 27%] Linking CXX executable test_stack_allocate",
+    "[ 33%] Built target test_stack_allocate",
+    "[ 38%] Linking CXX executable test_stack_deallocate",
+    "[ 44%] Built target test_stack_deallocate",
+    "[ 50%] Linking CXX executable test_stack_reallocate",
+    "[ 55%] Built target test_stack_reallocate",
+    "[ 61%] Linking CXX executable test_owns",
+    "[ 66%] Built target test_owns",
+    "[ 72%] Linking CXX executable test_allocate",
+    "[ 77%] Built target test_allocate",
+    "[ 83%] Linking CXX executable test_deallocate",
+    "[ 88%] Built target test_deallocate",
+    "[ 94%] Linking CXX executable test_reallocate",
+    "[100%] Built target test_reallocate",
+    "test_stack_allocate: /workspace/tests/test_stack_allocate.cpp:53: main()::<lambda(const alb::block&, size_t, size_t)>: Assertion `b.length % alignment == 0 && \"Allocated block length must be multiple of alignment\"' failed.",
+    "test_allocate: /workspace/tests/test_allocate.cpp:21: int main(): Assertion `b.length == 16 && \"Rounded to alignment\"' failed.",
+    "test_deallocate: /workspace/tests/test_deallocate.cpp:23: int main(): Assertion `p == static_cast<char*>(b1.ptr) + b1.length && \"Last block reclaimed\"' failed.",
+    "63% tests passed, 3 tests failed out of 8",
+    "The following tests FAILED:"
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "repo": "littlefs",
+  "task_id": "littlefs_func004",
+  "model": "mistralai/ministral-14b-instruct-2512",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "mode": "single_pass"
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 0,
+        "tool_calls_so_far": 0,
+        "tokens_so_far": 0,
+        "elapsed_time": 1.9550323486328125e-05
+      },
+      "reasoning": "Single-pass zero-shot completion (no reasoning chain)",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "type": "code_submission",
+        "code": "// Check if lookahead buffer is enabled\nif (lfs->cfg->lookahead_size == 0) {\n    // No lookahead buffer, use simple allocation\n    for (lfs_block_t block = 0; block < lfs->block_count; block++) {\n        if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n            lfs->free_queue[block >> 3] &= ~(1 << (block & 7));\n            *block = block;\n            return LFS_ERR_OK;\n        }\n    }\n    return LFS_ERR_NOSPC;\n}\n\n// Lookahead buffer is enabled\nlfs_block_t *lookahead = static_cast<lfs_block_t*>(lfs->cfg->lookahead_buffer);\nstd::memset(lookahead, 0, lfs->cfg->lookahead_size);\n\nlfs_block_t best_block = LFS_BLOCK_NULL;\nlfs_block_t best_wear = 0xFFFFFFFF;\nlfs_block_t best_erase = 0xFFFFFFFF;\nlfs_block_t best_lookahead = 0;\n\nlfs_block_t lookahead_start = lfs->lookahead_pos;\nlfs_block_t lookahead_end = lookahead_start + (lfs->cfg->lookahead_size * 8) - 1;\nif (lookahead_end >= lfs->block_count) {\n    lookahead_end = lfs->block_count - 1;\n}\n\nlfs_block_t lookahead_count = 0;\n\n// First pass: find blocks in lookahead range\nfor (lfs_block_t block = lookahead_start; block <= lookahead_end; block++) {\n    if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n        lookahead[lookahead_count++] = block;\n        if (lookahead_count >= lfs->cfg->lookahead_size * 8) {\n            break;\n        }\n    }\n}\n\n// Second pass: find blocks outside lookahead range\nif (lookahead_count < lfs->cfg->lookahead_size * 8) {\n    for (lfs_block_t block = 0; block < lfs->block_count; block++) {\n        if (block < lookahead_start || block > lookahead_end) {\n            if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n                lookahead[lookahead_count++] = block;\n                if (lookahead_count >= lfs->cfg->lookahead_size * 8) {\n                    break;\n                }\n            }\n        }\n    }\n}\n\n// Find best block with wear leveling\nfor (lfs_block_t i = 0; i < lookahead_count; i++) {\n    lfs_block_t block = lookahead[i];\n    lfs_block_t wear = lfs->block_erase_count[block];\n    lfs_block_t erase = lfs->block_erase_count[block];\n\n    // Prefer blocks with lower erase count\n    if (erase < best_erase) {\n        best_block = block;\n        best_erase = erase;\n        best_wear = wear;\n        best_lookahead = i;\n    }\n    // If same erase count, prefer blocks with lower wear\n    else if (erase == best_erase && wear < best_wear) {\n        best_block = block;\n        best_wear = wear;\n        best_lookahead = i;\n    }\n}\n\n// If no block found, return no space\nif (best_block == LFS_BLOCK_NULL) {\n    return LFS_ERR_NOSPC;\n}\n\n// Mark block as allocated\nlfs->free_queue[best_block >> 3] &= ~(1 << (best_block & 7));\n\n// Update wear leveling information\nif (lfs->cfg->block_cycles > 0) {\n    lfs->block_erase_count[best_block]++;\n}\n\n// Update lookahead position\nlfs->lookahead_pos = (best_lookahead + 1) % (lfs->cfg->lookahead_size * 8);\n\n*block = best_block;\nreturn LFS_ERR_OK;",
+        "code_length": 2918
+      },
+      "result": {
+        "compiles": false,
+        "tests_pass": false,
+        "test_summary": "FAILED",
+        "errors": [
+          "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+          "/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+          "/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})",
+          "/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?",
+          "/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+          "/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+          "/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+          "/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+          "/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+          "/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?"
+        ],
+        "full_test_results": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nConsolidate compiler generated dependencies of target lfs_functions\n[  3%] Building CXX object CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o\n",
+          "stderr": "/workspace/src/lfs_functions.cpp: In function 'int lfs_alloc(lfs_t*, lfs_block_t*)':\n/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  158 |           if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n      |                    ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  159 |               lfs->free_queue[block >> 3] &= ~(1 << (block & 7));\n      |                    ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})\n  160 |               *block = block;\n      |               ^~~~~~\n/workspace/src/lfs_functions.cpp:168:64: error: 'const struct lfs_config' has no member named 'lookahead_buffer'; did you mean 'lookahead_size'?\n  168 |   lfs_block_t *lookahead = static_cast<lfs_block_t*>(lfs->cfg->lookahead_buffer);\n      |                                                                ^~~~~~~~~~~~~~~~\n      |                                                                lookahead_size\n/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?\n  169 |   std::memset(lookahead, 0, lfs->cfg->lookahead_size);\n      |        ^~~~~~\n      |        wmemset\n/workspace/src/lfs_functions.cpp:176:38: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?\n  176 |   lfs_block_t lookahead_start = lfs->lookahead_pos;\n      |                                      ^~~~~~~~~~~~~\n      |                                      lookahead_buffer\n/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  186 |       if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n      |                ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  198 |               if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n      |                        ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n  211 |       lfs_block_t wear = lfs->block_erase_count[block];\n      |                               ^~~~~~~~~~~~~~~~~\n      |                               block_count\n/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n  212 |       lfs_block_t erase = lfs->block_erase_count[block];\n      |                                ^~~~~~~~~~~~~~~~~\n      |                                block_count\n/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  235 |   lfs->free_queue[best_block >> 3] &= ~(1 << (best_block & 7));\n      |        ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n  239 |       lfs->block_erase_count[best_block]++;\n      |            ^~~~~~~~~~~~~~~~~\n      |            block_count\n/workspace/src/lfs_functions.cpp:243:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?\n  243 |   lfs->lookahead_pos = (best_lookahead + 1) % (lfs->cfg->lookahead_size * 8);\n      |        ^~~~~~~~~~~~~\n      |        lookahead_buffer\nmake[2]: *** [CMakeFiles/lfs_functions.dir/build.make:76: CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:107: CMakeFiles/lfs_functions.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})",
+            "/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?",
+            "/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+            "/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+            "/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?"
+          ],
+          "logs": [
+            "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})",
+            "/workspace/src/lfs_functions.cpp:168:64: error: 'const struct lfs_config' has no member named 'lookahead_buffer'; did you mean 'lookahead_size'?",
+            "/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?",
+            "/workspace/src/lfs_functions.cpp:176:38: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?",
+            "/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+            "/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+            "/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+            "/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+            "/workspace/src/lfs_functions.cpp:243:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 15.632592678070068,
+      "tokens_used": 7976,
+      "token_breakdown": {
+        "completion_tokens": 924,
+        "prompt_tokens": 7052,
+        "total_tokens": 7976
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "// Check if lookahead buffer is enabled\nif (lfs->cfg->lookahead_size == 0) {\n    // No lookahead buffer, use simple allocation\n    for (lfs_block_t block = 0; block < lfs->block_count; block++) {\n        if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n            lfs->free_queue[block >> 3] &= ~(1 << (block & 7));\n            *block = block;\n            return LFS_ERR_OK;\n        }\n    }\n    return LFS_ERR_NOSPC;\n}\n\n// Lookahead buffer is enabled\nlfs_block_t *lookahead = static_cast<lfs_block_t*>(lfs->cfg->lookahead_buffer);\nstd::memset(lookahead, 0, lfs->cfg->lookahead_size);\n\nlfs_block_t best_block = LFS_BLOCK_NULL;\nlfs_block_t best_wear = 0xFFFFFFFF;\nlfs_block_t best_erase = 0xFFFFFFFF;\nlfs_block_t best_lookahead = 0;\n\nlfs_block_t lookahead_start = lfs->lookahead_pos;\nlfs_block_t lookahead_end = lookahead_start + (lfs->cfg->lookahead_size * 8) - 1;\nif (lookahead_end >= lfs->block_count) {\n    lookahead_end = lfs->block_count - 1;\n}\n\nlfs_block_t lookahead_count = 0;\n\n// First pass: find blocks in lookahead range\nfor (lfs_block_t block = lookahead_start; block <= lookahead_end; block++) {\n    if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n        lookahead[lookahead_count++] = block;\n        if (lookahead_count >= lfs->cfg->lookahead_size * 8) {\n            break;\n        }\n    }\n}\n\n// Second pass: find blocks outside lookahead range\nif (lookahead_count < lfs->cfg->lookahead_size * 8) {\n    for (lfs_block_t block = 0; block < lfs->block_count; block++) {\n        if (block < lookahead_start || block > lookahead_end) {\n            if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n                lookahead[lookahead_count++] = block;\n                if (lookahead_count >= lfs->cfg->lookahead_size * 8) {\n                    break;\n                }\n            }\n        }\n    }\n}\n\n// Find best block with wear leveling\nfor (lfs_block_t i = 0; i < lookahead_count; i++) {\n    lfs_block_t block = lookahead[i];\n    lfs_block_t wear = lfs->block_erase_count[block];\n    lfs_block_t erase = lfs->block_erase_count[block];\n\n    // Prefer blocks with lower erase count\n    if (erase < best_erase) {\n        best_block = block;\n        best_erase = erase;\n        best_wear = wear;\n        best_lookahead = i;\n    }\n    // If same erase count, prefer blocks with lower wear\n    else if (erase == best_erase && wear < best_wear) {\n        best_block = block;\n        best_wear = wear;\n        best_lookahead = i;\n    }\n}\n\n// If no block found, return no space\nif (best_block == LFS_BLOCK_NULL) {\n    return LFS_ERR_NOSPC;\n}\n\n// Mark block as allocated\nlfs->free_queue[best_block >> 3] &= ~(1 << (best_block & 7));\n\n// Update wear leveling information\nif (lfs->cfg->block_cycles > 0) {\n    lfs->block_erase_count[best_block]++;\n}\n\n// Update lookahead position\nlfs->lookahead_pos = (best_lookahead + 1) % (lfs->cfg->lookahead_size * 8);\n\n*block = best_block;\nreturn LFS_ERR_OK;",
+    "compiled": false,
+    "compile_error": "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})\n/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?\n/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+    "failure_category": "compilation_error",
+    "compile_attempts": 1,
+    "last_compile_errors": [
+      "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})",
+      "/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?",
+      "/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?"
+    ],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 1,
+    "total_tool_calls": 0,
+    "tokens_used": 7976,
+    "wall_clock_sec": 15.632592678070068,
+    "stop_reason": "single_pass_complete"
+  },
+  "test_results": {
+    "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nConsolidate compiler generated dependencies of target lfs_functions\n[  3%] Building CXX object CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o\n",
+    "stderr": "/workspace/src/lfs_functions.cpp: In function 'int lfs_alloc(lfs_t*, lfs_block_t*)':\n/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  158 |           if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n      |                    ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  159 |               lfs->free_queue[block >> 3] &= ~(1 << (block & 7));\n      |                    ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})\n  160 |               *block = block;\n      |               ^~~~~~\n/workspace/src/lfs_functions.cpp:168:64: error: 'const struct lfs_config' has no member named 'lookahead_buffer'; did you mean 'lookahead_size'?\n  168 |   lfs_block_t *lookahead = static_cast<lfs_block_t*>(lfs->cfg->lookahead_buffer);\n      |                                                                ^~~~~~~~~~~~~~~~\n      |                                                                lookahead_size\n/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?\n  169 |   std::memset(lookahead, 0, lfs->cfg->lookahead_size);\n      |        ^~~~~~\n      |        wmemset\n/workspace/src/lfs_functions.cpp:176:38: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?\n  176 |   lfs_block_t lookahead_start = lfs->lookahead_pos;\n      |                                      ^~~~~~~~~~~~~\n      |                                      lookahead_buffer\n/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  186 |       if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n      |                ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  198 |               if (lfs->free_queue[block >> 3] & (1 << (block & 7))) {\n      |                        ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n  211 |       lfs_block_t wear = lfs->block_erase_count[block];\n      |                               ^~~~~~~~~~~~~~~~~\n      |                               block_count\n/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n  212 |       lfs_block_t erase = lfs->block_erase_count[block];\n      |                                ^~~~~~~~~~~~~~~~~\n      |                                block_count\n/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'\n  235 |   lfs->free_queue[best_block >> 3] &= ~(1 << (best_block & 7));\n      |        ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?\n  239 |       lfs->block_erase_count[best_block]++;\n      |            ^~~~~~~~~~~~~~~~~\n      |            block_count\n/workspace/src/lfs_functions.cpp:243:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?\n  243 |   lfs->lookahead_pos = (best_lookahead + 1) % (lfs->cfg->lookahead_size * 8);\n      |        ^~~~~~~~~~~~~\n      |        lookahead_buffer\nmake[2]: *** [CMakeFiles/lfs_functions.dir/build.make:76: CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:107: CMakeFiles/lfs_functions.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+    "returncode": 2,
+    "errors": [
+      "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})",
+      "/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?",
+      "/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?"
+    ],
+    "logs": [
+      "/workspace/src/lfs_functions.cpp:158:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:159:20: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:160:15: error: invalid type argument of unary '*' (have 'lfs_block_t' {aka 'unsigned int'})",
+      "/workspace/src/lfs_functions.cpp:168:64: error: 'const struct lfs_config' has no member named 'lookahead_buffer'; did you mean 'lookahead_size'?",
+      "/workspace/src/lfs_functions.cpp:169:8: error: 'memset' is not a member of 'std'; did you mean 'wmemset'?",
+      "/workspace/src/lfs_functions.cpp:176:38: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?",
+      "/workspace/src/lfs_functions.cpp:186:16: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:198:24: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:211:31: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:212:32: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:235:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'free_queue'",
+      "/workspace/src/lfs_functions.cpp:239:12: error: 'lfs_t' {aka 'struct lfs'} has no member named 'block_erase_count'; did you mean 'block_count'?",
+      "/workspace/src/lfs_functions.cpp:243:8: error: 'lfs_t' {aka 'struct lfs'} has no member named 'lookahead_pos'; did you mean 'lookahead_buffer'?"
+    ]
+  },
+  "passed_tests": false
+}

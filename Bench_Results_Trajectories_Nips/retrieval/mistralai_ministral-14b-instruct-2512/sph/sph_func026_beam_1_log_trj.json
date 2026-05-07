@@ -1,0 +1,150 @@
+{
+  "repo": "sph",
+  "task_id": "sph_func026",
+  "model": "mistralai/ministral-14b-instruct-2512",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "mode": "single_pass"
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 0,
+        "tool_calls_so_far": 0,
+        "tokens_so_far": 0,
+        "elapsed_time": 1.6927719116210938e-05
+      },
+      "reasoning": "Single-pass zero-shot completion (no reasoning chain)",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "type": "code_submission",
+        "code": "// Calculate pressure force\nfor (size_t i = start; i < end; i++) {\n    Particle& p = particles[i];\n    glm::vec3 pressureForce(0.0f);\n\n    // Get cell coordinates for current particle\n    glm::ivec3 cell = getCell(&p, h);\n\n    // Check neighboring cells (27 cells in 3D space)\n    for (int x = -1; x <= 1; x++) {\n        for (int y = -1; y <= 1; y++) {\n            for (int z = -1; z <= 1; z++) {\n                glm::ivec3 neighborCell = cell + glm::ivec3(x, y, z);\n                uint32_t neighborHash = getHash(neighborCell);\n\n                // Get first neighbor in this cell\n                uint32_t neighborIndex = particleTable[neighborHash];\n                while (neighborIndex != NO_PARTICLE) {\n                    Particle& neighbor = particles[neighborIndex];\n\n                    // Calculate distance between particles\n                    glm::vec3 r = neighbor.position - p.position;\n                    float rSquared = glm::dot(r, r);\n                    float r = std::sqrt(rSquared);\n\n                    // Skip if outside kernel support\n                    if (r > h) {\n                        neighborIndex = neighbor.nextInCell;\n                        continue;\n                    }\n\n                    // Calculate kernel and gradient terms\n                    float kernel = sphGPU::poly6Kernel(rSquared, h2);\n                    float gradKernel = sphGPU::spikyGradKernel(rSquared, h2);\n\n                    // Pressure force contribution\n                    float pressureDiff = (p.pressure + neighbor.pressure) / 2.0f;\n                    glm::vec3 force = pressureDiff * gradKernel * r;\n                    pressureForce += force;\n\n                    neighborIndex = neighbor.nextInCell;\n                }\n            }\n        }\n    }\n\n    // Viscosity force\n    glm::vec3 viscosityForce(0.0f);\n    for (int x = -1; x <= 1; x++) {\n        for (int y = -1; y <= 1; y++) {\n            for (int z = -1; z <= 1; z++) {\n                glm::ivec3 neighborCell = cell + glm::ivec3(x, y, z);\n                uint32_t neighborHash = getHash(neighborCell);\n\n                uint32_t neighborIndex = particleTable[neighborHash];\n                while (neighborIndex != NO_PARTICLE) {\n                    Particle& neighbor = particles[neighborIndex];\n\n                    glm::vec3 r = neighbor.position - p.position;\n                    float rSquared = glm::dot(r, r);\n                    float r = std::sqrt(rSquared);\n\n                    if (r > h) {\n                        neighborIndex = neighbor.nextInCell;\n                        continue;\n                    }\n\n                    // Calculate viscosity force\n                    float lapKernel = sphGPU::spikyLapKernel(rSquared, h2);\n                    glm::vec3 relativeVel = neighbor.velocity - p.velocity;\n                    glm::vec3 force = viscosity * lapKernel * relativeVel;\n                    viscosityForce += force;\n\n                    neighborIndex = neighbor.nextInCell;\n                }\n            }\n        }\n    }\n\n    // Apply forces\n    p.force += pressureForce + viscosityForce;\n}",
+        "code_length": 3096
+      },
+      "result": {
+        "compiles": false,
+        "tests_pass": false,
+        "test_summary": "FAILED",
+        "errors": [
+          "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'",
+          "/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'",
+          "/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+          "/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'",
+          "/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared",
+          "/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared",
+          "/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'",
+          "/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'",
+          "/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'",
+          "/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')"
+        ],
+        "full_test_results": {
+          "stdout": "-- The CXX compiler identification is GNU 11.4.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /usr/bin/c++ - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\n[  1%] Building CXX object CMakeFiles/sph_lib.dir/src/sph_functions.cpp.o\n",
+          "stderr": "/workspace/src/sph_functions.cpp: In function 'void parallelForces(Particle*, size_t, size_t, size_t, const uint32_t*, float, float, float, float, float, float)':\n/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'\n  378 |                       float r = std::sqrt(rSquared);\n      |                             ^\n/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'\n  376 |                       glm::vec3 r = neighbor.position - p.position;\n      |                                 ^\n/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')\n  381 |                       if (r > h) {\n      |                           ~ ^ ~\n      |                           |   |\n      |                           |   float\n      |                           glm::vec3 {aka glm::vec<3, float, glm::packed_highp>}\n/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'\n  382 |                           neighborIndex = neighbor.nextInCell;\n      |                                                    ^~~~~~~~~~\n/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared\n  387 |                       float kernel = sphGPU::poly6Kernel(rSquared, h2);\n      |                                      ^~~~~~\n/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared\n  388 |                       float gradKernel = sphGPU::spikyGradKernel(rSquared, h2);\n      |                                          ^~~~~~\n/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'\n  395 |                       neighborIndex = neighbor.nextInCell;\n      |                                                ^~~~~~~~~~\n/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'\n  415 |                       float r = std::sqrt(rSquared);\n      |                             ^\n/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'\n  413 |                       glm::vec3 r = neighbor.position - p.position;\n      |                                 ^\n/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')\n  417 |                       if (r > h) {\n      |                           ~ ^ ~\n      |                           |   |\n      |                           |   float\n      |                           glm::vec3 {aka glm::vec<3, float, glm::packed_highp>}\n/workspace/src/sph_functions.cpp:418:52: error: 'struct Particle' has no member named 'nextInCell'\n  418 |                           neighborIndex = neighbor.nextInCell;\n      |                                                    ^~~~~~~~~~\n/workspace/src/sph_functions.cpp:423:41: error: 'sphGPU' has not been declared\n  423 |                       float lapKernel = sphGPU::spikyLapKernel(rSquared, h2);\n      |                                         ^~~~~~\n/workspace/src/sph_functions.cpp:428:48: error: 'struct Particle' has no member named 'nextInCell'\n  428 |                       neighborIndex = neighbor.nextInCell;\n      |                                                ^~~~~~~~~~\nmake[2]: *** [CMakeFiles/sph_lib.dir/build.make:76: CMakeFiles/sph_lib.dir/src/sph_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/sph_lib.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'",
+            "/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'",
+            "/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+            "/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'",
+            "/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared",
+            "/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared",
+            "/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'",
+            "/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'",
+            "/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'",
+            "/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+            "/workspace/src/sph_functions.cpp:418:52: error: 'struct Particle' has no member named 'nextInCell'",
+            "/workspace/src/sph_functions.cpp:423:41: error: 'sphGPU' has not been declared",
+            "/workspace/src/sph_functions.cpp:428:48: error: 'struct Particle' has no member named 'nextInCell'"
+          ],
+          "logs": [
+            "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'",
+            "/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+            "/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'",
+            "/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared",
+            "/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared",
+            "/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'",
+            "/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'",
+            "/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+            "/workspace/src/sph_functions.cpp:418:52: error: 'struct Particle' has no member named 'nextInCell'",
+            "/workspace/src/sph_functions.cpp:423:41: error: 'sphGPU' has not been declared",
+            "/workspace/src/sph_functions.cpp:428:48: error: 'struct Particle' has no member named 'nextInCell'"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 11.724823474884033,
+      "tokens_used": 6282,
+      "token_breakdown": {
+        "completion_tokens": 710,
+        "prompt_tokens": 5572,
+        "total_tokens": 6282
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "// Calculate pressure force\nfor (size_t i = start; i < end; i++) {\n    Particle& p = particles[i];\n    glm::vec3 pressureForce(0.0f);\n\n    // Get cell coordinates for current particle\n    glm::ivec3 cell = getCell(&p, h);\n\n    // Check neighboring cells (27 cells in 3D space)\n    for (int x = -1; x <= 1; x++) {\n        for (int y = -1; y <= 1; y++) {\n            for (int z = -1; z <= 1; z++) {\n                glm::ivec3 neighborCell = cell + glm::ivec3(x, y, z);\n                uint32_t neighborHash = getHash(neighborCell);\n\n                // Get first neighbor in this cell\n                uint32_t neighborIndex = particleTable[neighborHash];\n                while (neighborIndex != NO_PARTICLE) {\n                    Particle& neighbor = particles[neighborIndex];\n\n                    // Calculate distance between particles\n                    glm::vec3 r = neighbor.position - p.position;\n                    float rSquared = glm::dot(r, r);\n                    float r = std::sqrt(rSquared);\n\n                    // Skip if outside kernel support\n                    if (r > h) {\n                        neighborIndex = neighbor.nextInCell;\n                        continue;\n                    }\n\n                    // Calculate kernel and gradient terms\n                    float kernel = sphGPU::poly6Kernel(rSquared, h2);\n                    float gradKernel = sphGPU::spikyGradKernel(rSquared, h2);\n\n                    // Pressure force contribution\n                    float pressureDiff = (p.pressure + neighbor.pressure) / 2.0f;\n                    glm::vec3 force = pressureDiff * gradKernel * r;\n                    pressureForce += force;\n\n                    neighborIndex = neighbor.nextInCell;\n                }\n            }\n        }\n    }\n\n    // Viscosity force\n    glm::vec3 viscosityForce(0.0f);\n    for (int x = -1; x <= 1; x++) {\n        for (int y = -1; y <= 1; y++) {\n            for (int z = -1; z <= 1; z++) {\n                glm::ivec3 neighborCell = cell + glm::ivec3(x, y, z);\n                uint32_t neighborHash = getHash(neighborCell);\n\n                uint32_t neighborIndex = particleTable[neighborHash];\n                while (neighborIndex != NO_PARTICLE) {\n                    Particle& neighbor = particles[neighborIndex];\n\n                    glm::vec3 r = neighbor.position - p.position;\n                    float rSquared = glm::dot(r, r);\n                    float r = std::sqrt(rSquared);\n\n                    if (r > h) {\n                        neighborIndex = neighbor.nextInCell;\n                        continue;\n                    }\n\n                    // Calculate viscosity force\n                    float lapKernel = sphGPU::spikyLapKernel(rSquared, h2);\n                    glm::vec3 relativeVel = neighbor.velocity - p.velocity;\n                    glm::vec3 force = viscosity * lapKernel * relativeVel;\n                    viscosityForce += force;\n\n                    neighborIndex = neighbor.nextInCell;\n                }\n            }\n        }\n    }\n\n    // Apply forces\n    p.force += pressureForce + viscosityForce;\n}",
+    "compiled": false,
+    "compile_error": "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'\n/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'\n/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')\n/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'\n/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared\n/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared\n/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'\n/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'\n/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'\n/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+    "failure_category": "compilation_error",
+    "compile_attempts": 1,
+    "last_compile_errors": [
+      "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'",
+      "/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'",
+      "/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+      "/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'",
+      "/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'",
+      "/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')"
+    ],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 1,
+    "total_tool_calls": 0,
+    "tokens_used": 6282,
+    "wall_clock_sec": 11.724823474884033,
+    "stop_reason": "single_pass_complete"
+  },
+  "test_results": {
+    "stdout": "-- The CXX compiler identification is GNU 11.4.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /usr/bin/c++ - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\n[  1%] Building CXX object CMakeFiles/sph_lib.dir/src/sph_functions.cpp.o\n",
+    "stderr": "/workspace/src/sph_functions.cpp: In function 'void parallelForces(Particle*, size_t, size_t, size_t, const uint32_t*, float, float, float, float, float, float)':\n/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'\n  378 |                       float r = std::sqrt(rSquared);\n      |                             ^\n/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'\n  376 |                       glm::vec3 r = neighbor.position - p.position;\n      |                                 ^\n/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')\n  381 |                       if (r > h) {\n      |                           ~ ^ ~\n      |                           |   |\n      |                           |   float\n      |                           glm::vec3 {aka glm::vec<3, float, glm::packed_highp>}\n/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'\n  382 |                           neighborIndex = neighbor.nextInCell;\n      |                                                    ^~~~~~~~~~\n/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared\n  387 |                       float kernel = sphGPU::poly6Kernel(rSquared, h2);\n      |                                      ^~~~~~\n/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared\n  388 |                       float gradKernel = sphGPU::spikyGradKernel(rSquared, h2);\n      |                                          ^~~~~~\n/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'\n  395 |                       neighborIndex = neighbor.nextInCell;\n      |                                                ^~~~~~~~~~\n/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'\n  415 |                       float r = std::sqrt(rSquared);\n      |                             ^\n/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'\n  413 |                       glm::vec3 r = neighbor.position - p.position;\n      |                                 ^\n/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')\n  417 |                       if (r > h) {\n      |                           ~ ^ ~\n      |                           |   |\n      |                           |   float\n      |                           glm::vec3 {aka glm::vec<3, float, glm::packed_highp>}\n/workspace/src/sph_functions.cpp:418:52: error: 'struct Particle' has no member named 'nextInCell'\n  418 |                           neighborIndex = neighbor.nextInCell;\n      |                                                    ^~~~~~~~~~\n/workspace/src/sph_functions.cpp:423:41: error: 'sphGPU' has not been declared\n  423 |                       float lapKernel = sphGPU::spikyLapKernel(rSquared, h2);\n      |                                         ^~~~~~\n/workspace/src/sph_functions.cpp:428:48: error: 'struct Particle' has no member named 'nextInCell'\n  428 |                       neighborIndex = neighbor.nextInCell;\n      |                                                ^~~~~~~~~~\nmake[2]: *** [CMakeFiles/sph_lib.dir/build.make:76: CMakeFiles/sph_lib.dir/src/sph_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/sph_lib.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+    "returncode": 2,
+    "errors": [
+      "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'",
+      "/workspace/src/sph_functions.cpp:376:33: note: previous declaration as 'glm::vec3 r'",
+      "/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+      "/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'",
+      "/workspace/src/sph_functions.cpp:413:33: note: previous declaration as 'glm::vec3 r'",
+      "/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+      "/workspace/src/sph_functions.cpp:418:52: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:423:41: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:428:48: error: 'struct Particle' has no member named 'nextInCell'"
+    ],
+    "logs": [
+      "/workspace/src/sph_functions.cpp:378:29: error: conflicting declaration 'float r'",
+      "/workspace/src/sph_functions.cpp:381:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+      "/workspace/src/sph_functions.cpp:382:52: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:387:38: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:388:42: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:395:48: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:415:29: error: conflicting declaration 'float r'",
+      "/workspace/src/sph_functions.cpp:417:29: error: no match for 'operator>' (operand types are 'glm::vec3' {aka 'glm::vec<3, float, glm::packed_highp>'} and 'float')",
+      "/workspace/src/sph_functions.cpp:418:52: error: 'struct Particle' has no member named 'nextInCell'",
+      "/workspace/src/sph_functions.cpp:423:41: error: 'sphGPU' has not been declared",
+      "/workspace/src/sph_functions.cpp:428:48: error: 'struct Particle' has no member named 'nextInCell'"
+    ]
+  },
+  "passed_tests": false
+}

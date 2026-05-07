@@ -1,0 +1,157 @@
+{
+  "repo": "nanort",
+  "task_id": "nanort_func011",
+  "model": "nvidia/nemotron-3-nano-30b-a3b",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "max_iterations": 12,
+    "max_tool_calls": 36,
+    "max_time": 600,
+    "max_tokens": 100000,
+    "max_tokens_per_turn": 7000,
+    "tool_call_limit_per_iteration": 4,
+    "disable_compression": true
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 1,
+        "tool_calls_so_far": 1,
+        "tokens_so_far": 2106,
+        "elapsed_time": 17.13760256767273
+      },
+      "reasoning": "We need to implement a function called safemax that returns a const reference to the maximum of two values, but NaN-safe. Likely it's a template function that works for numeric types, handling NaN specially. The context: \"Namespace: nanort::safemax\". We need to implement the function body only, without signature, braces? Actually instructions: Provide ONLY the function body implementation. Do NOT include the function signature. Do NOT include opening/closing braces. Wait: They say \"Do NOT include opening/closing braces\". That seems contradictory: they want the function body only, but not include opening/closing braces? In example they gave correct answer: they showed code inside function but without signature and without braces? Let's re-read:\n\nThey said: \"Provide ONLY the function body implementation\". Then \"Do NOT include the function signature\". \"Do NOT include opening/closing braces\". So we should output just the statements inside the function, but not the opening brace `{` nor the closing `}`. Actually they say \"Do NOT include opening/closing braces\". So we should output the code that would be inside the function, but not include the braces themselves. That means we just output the statements separated by newlines, ending maybe with a return statement, but not include the `{` after the signature, nor the final `}`. So we need to output something like:\n\n```\nif (isnan(a)) return b;\nif (isnan(b)) return a;\nreturn a > b ? a : b;\n```\n\nBut we need to be careful: The function returns a const reference to T. So we need to return either a or b, as a const reference. So we can do:\n\n```\nif (isnan(a)) return b;\nif (isnan(b)) return a;\nreturn a > b ? a : b;\n```\n\nBut we need to handle potential issues with NaN comparisons. In C++, comparing NaN with anything using <, >, >=, <= returns false. So a > b when a is NaN will be false, and b > a also false, so the ternary a > b ? a : b will return b if a > b is false, which would be wrong if both are NaN? Actually if a is NaN and b is also NaN, then a > b is false, so it returns b (which is also NaN). That's okay? But maybe they want to return the argument that is not NaN if one is NaN, else return a if a >= b? Actually typical NaN-safe max returns the non-NaN value, and if both are NaN, returns one of them (maybe the first?). Let's think: The function signature is `const T &safemax(const T &a, const T &b)`. It returns a reference to either a or b. So we cannot create a new object; we must return a reference to one of the arguments. So we need to decide which to return based on NaN-ness and magnitude.\n\nImplementation approach: Use `std::isnan` if T is floating type. But we need generic code that works for any type T. Possibly they only instantiate with floating types. Could use `std::numeric_limits<T>::quiet_NaN()` to check? But that requires <limits>. However we have full standard library.\n\nSimplify: Use `if (a != a) return b;` because NaN is the only value that is not equal to itself. That's a common trick. So:\n\n```\nif (a != a) return b;\nif (b != b) return a;\nreturn a > b ? a : b;\n```\n\nBut need to handle cases where both are NaN: then both a != a and b != b are true, so first condition triggers and returns b (which is also NaN). That's okay.\n\nBut need to ensure we use proper comparison for non-NaN values. For numeric types, `a > b` works. For other types maybe not? But likely it's for floating types.\n\nThus the function body could be:\n\n```\nif (a != a) return b;\nif (b != b) return a;\nreturn (a > b) ? a : b;\n```\n\nBut we need to ensure we use proper ternary that returns a reference to either a or b. The conditional operator yields a reference to whichever operand is selected? Actually `condition ? a : b` yields `std::common_type_t<T, T>`? For fundamental types, it yields the type of a and b, which is T. But the result of the conditional operator is a value, not a reference. However we can use `return (a > b) ? a : b;` which returns a const reference to whichever is selected? Actually the conditional operator yields a prvalue, but when returning a reference, the expression must be a reference to an object with appropriate lifetime. Returning `a` or `b` as a reference is okay because they are function parameters (lvalues). The conditional operator yields a reference to whichever is selected? Let's recall: The conditional operator yields a value that is either the second or third operand, which are both references to T. Actually the types of the second and third operands are both `const T&`. The conditional operator's result type is `const T&`? Let's check: If both operands are of the same type, the result type is that type. But if they are references, the result type is the type they refer to? Actually the conditional operator's type is the common type of the second and third operands. If both are references, they are not considered for type deduction; the type of the result is the type of the operands after lvalue conversion? I think the result type is `const T&` because both operands are references to T. Actually the conditional operator yields `std::common_type_t<decltype(a), decltype(b)>`? If both are references, the result type is the type they refer to? I'm not entirely sure, but I think returning `a` or `b` via conditional will yield a reference to T. Let's test quickly: In C++, `int &x = cond ? a : b;` where a and b are int&; this is allowed? Actually you cannot bind a reference to a temporary, but here a and b are lvalues (function parameters). The conditional operator yields an lvalue of type `int` (or `int&`?). Actually the type of the conditional expression is the common type of the second and third operands after applying lvalue conversion? The result is a prvalue, but it can be bound to a reference. So returning `a` or `b` via conditional yields a temporary copy? No, it yields the selected operand, which is an lvalue of type `const T&`. The type of the conditional expression is `const T&`? Let's check: If both operands are of type `const T&`, the conditional expression yields `const T&`. Actually the type of the conditional expression is the type of the second or third operand after lvalue conversion, which yields `const T&`. So returning it as `const T&` is fine.\n\nThus the code is fine.\n\nNow we need to implement inside the function body, without braces. So we just output the statements separated by newline, ending with a return statement. The function body must be self-contained.\n\nThus answer: Provide code inside function body, no braces, no signature.\n\nThus output:\n\n```\nif (a != a) return b;\nif (b != b) return a;\nreturn (a > b) ? a : b;\n```\n\nBut need to ensure we use proper spacing and indentation (4 spaces). The instructions: Use proper indentation (4 spaces). So each line should be indented with 4 spaces? The example they gave had code inside function with indentation but no braces. They used 4 spaces for each line? The example:\n\n```\nint count = 0;\nfor (int i = 0; i < n; i++) {\n    count++;\n}\nreturn count;\n```\n\nBut they said not to include braces. Actually they included braces inside example but that was just example of code inside function? They said \"Provide ONLY the code that goes INSIDE the function braces.\" But then they said \"Do NOT include opening/closing braces\". So we should not include the opening brace after the signature, nor the closing brace at the end. So we just output the statements inside, each line starting with 4 spaces? The example shows code lines starting at column 0? Actually they didn't indent. But they said \"Use proper indentation (4 spaces)\". So we should indent the entire body with 4 spaces? Or each line should be indented by 4 spaces relative to the function's opening brace? Since we are not including the braces, we can just output the statements each starting with 4 spaces? Probably they want the body indented by 4 spaces relative to the function signature. Since we are not outputting the signature or braces, we can just output the statements each starting with 4 spaces. That would be consistent.\n\nThus output:\n\n```\n    if (a != a) return b;\n    if (b != b) return a;\n    return (a > b) ? a : b;\n```\n\nBut we must not include the opening/closing braces. So just those three lines.\n\nMake sure we use `std::isnan`? But we used `a != a` trick which works for NaN. That's generic and doesn't require `<cmath>`? It works for floating types; for non-floating types, `a != a` is false, so it won't treat them as NaN. That's fine.\n\nThus final answer: Provide the three lines indented with 4 spaces.\n\nThus final output:\n\n```\n    if (a != a) return b;\n    if (b != b) return a;\n    return (a > b) ? a : b;\n```\n",
+      "reasoning_content": "We need to implement a function called safemax that returns a const reference to the maximum of two values, but NaN-safe. Likely it's a template function that works for numeric types, handling NaN specially. The context: \"Namespace: nanort::safemax\". We need to implement the function body only, without signature, braces? Actually instructions: Provide ONLY the function body implementation. Do NOT include the function signature. Do NOT include opening/closing braces. Wait: They say \"Do NOT include opening/closing braces\". That seems contradictory: they want the function body only, but not include opening/closing braces? In example they gave correct answer: they showed code inside function but without signature and without braces? Let's re-read:\n\nThey said: \"Provide ONLY the function body implementation\". Then \"Do NOT include the function signature\". \"Do NOT include opening/closing braces\". So we should output just the statements inside the function, but not the opening brace `{` nor the closing `}`. Actually they say \"Do NOT include opening/closing braces\". So we should output the code that would be inside the function, but not include the braces themselves. That means we just output the statements separated by newlines, ending maybe with a return statement, but not include the `{` after the signature, nor the final `}`. So we need to output something like:\n\n```\nif (isnan(a)) return b;\nif (isnan(b)) return a;\nreturn a > b ? a : b;\n```\n\nBut we need to be careful: The function returns a const reference to T. So we need to return either a or b, as a const reference. So we can do:\n\n```\nif (isnan(a)) return b;\nif (isnan(b)) return a;\nreturn a > b ? a : b;\n```\n\nBut we need to handle potential issues with NaN comparisons. In C++, comparing NaN with anything using <, >, >=, <= returns false. So a > b when a is NaN will be false, and b > a also false, so the ternary a > b ? a : b will return b if a > b is false, which would be wrong if both are NaN? Actually if a is NaN and b is also NaN, then a > b is false, so it returns b (which is also NaN). That's okay? But maybe they want to return the argument that is not NaN if one is NaN, else return a if a >= b? Actually typical NaN-safe max returns the non-NaN value, and if both are NaN, returns one of them (maybe the first?). Let's think: The function signature is `const T &safemax(const T &a, const T &b)`. It returns a reference to either a or b. So we cannot create a new object; we must return a reference to one of the arguments. So we need to decide which to return based on NaN-ness and magnitude.\n\nImplementation approach: Use `std::isnan` if T is floating type. But we need generic code that works for any type T. Possibly they only instantiate with floating types. Could use `std::numeric_limits<T>::quiet_NaN()` to check? But that requires <limits>. However we have full standard library.\n\nSimplify: Use `if (a != a) return b;` because NaN is the only value that is not equal to itself. That's a common trick. So:\n\n```\nif (a != a) return b;\nif (b != b) return a;\nreturn a > b ? a : b;\n```\n\nBut need to handle cases where both are NaN: then both a != a and b != b are true, so first condition triggers and returns b (which is also NaN). That's okay.\n\nBut need to ensure we use proper comparison for non-NaN values. For numeric types, `a > b` works. For other types maybe not? But likely it's for floating types.\n\nThus the function body could be:\n\n```\nif (a != a) return b;\nif (b != b) return a;\nreturn (a > b) ? a : b;\n```\n\nBut we need to ensure we use proper ternary that returns a reference to either a or b. The conditional operator yields a reference to whichever operand is selected? Actually `condition ? a : b` yields `std::common_type_t<T, T>`? For fundamental types, it yields the type of a and b, which is T. But the result of the conditional operator is a value, not a reference. However we can use `return (a > b) ? a : b;` which returns a const reference to whichever is selected? Actually the conditional operator yields a prvalue, but when returning a reference, the expression must be a reference to an object with appropriate lifetime. Returning `a` or `b` as a reference is okay because they are function parameters (lvalues). The conditional operator yields a reference to whichever is selected? Let's recall: The conditional operator yields a value that is either the second or third operand, which are both references to T. Actually the types of the second and third operands are both `const T&`. The conditional operator's result type is `const T&`? Let's check: If both operands are of the same type, the result type is that type. But if they are references, the result type is the type they refer to? Actually the conditional operator's type is the common type of the second and third operands. If both are references, they are not considered for type deduction; the type of the result is the type of the operands after lvalue conversion? I think the result type is `const T&` because both operands are references to T. Actually the conditional operator yields `std::common_type_t<decltype(a), decltype(b)>`? If both are references, the result type is the type they refer to? I'm not entirely sure, but I think returning `a` or `b` via conditional will yield a reference to T. Let's test quickly: In C++, `int &x = cond ? a : b;` where a and b are int&; this is allowed? Actually you cannot bind a reference to a temporary, but here a and b are lvalues (function parameters). The conditional operator yields an lvalue of type `int` (or `int&`?). Actually the type of the conditional expression is the common type of the second and third operands after applying lvalue conversion? The result is a prvalue, but it can be bound to a reference. So returning `a` or `b` via conditional yields a temporary copy? No, it yields the selected operand, which is an lvalue of type `const T&`. The type of the conditional expression is `const T&`? Let's check: If both operands are of type `const T&`, the conditional expression yields `const T&`. Actually the type of the conditional expression is the type of the second or third operand after lvalue conversion, which yields `const T&`. So returning it as `const T&` is fine.\n\nThus the code is fine.\n\nNow we need to implement inside the function body, without braces. So we just output the statements separated by newline, ending with a return statement. The function body must be self-contained.\n\nThus answer: Provide code inside function body, no braces, no signature.\n\nThus output:\n\n```\nif (a != a) return b;\nif (b != b) return a;\nreturn (a > b) ? a : b;\n```\n\nBut need to ensure we use proper spacing and indentation (4 spaces). The instructions: Use proper indentation (4 spaces). So each line should be indented with 4 spaces? The example they gave had code inside function with indentation but no braces. They used 4 spaces for each line? The example:\n\n```\nint count = 0;\nfor (int i = 0; i < n; i++) {\n    count++;\n}\nreturn count;\n```\n\nBut they said not to include braces. Actually they included braces inside example but that was just example of code inside function? They said \"Provide ONLY the code that goes INSIDE the function braces.\" But then they said \"Do NOT include opening/closing braces\". So we should not include the opening brace after the signature, nor the closing brace at the end. So we just output the statements inside, each line starting with 4 spaces? The example shows code lines starting at column 0? Actually they didn't indent. But they said \"Use proper indentation (4 spaces)\". So we should indent the entire body with 4 spaces? Or each line should be indented by 4 spaces relative to the function's opening brace? Since we are not including the braces, we can just output the statements each starting with 4 spaces? Probably they want the body indented by 4 spaces relative to the function signature. Since we are not outputting the signature or braces, we can just output the statements each starting with 4 spaces. That would be consistent.\n\nThus output:\n\n```\n    if (a != a) return b;\n    if (b != b) return a;\n    return (a > b) ? a : b;\n```\n\nBut we must not include the opening/closing braces. So just those three lines.\n\nMake sure we use `std::isnan`? But we used `a != a` trick which works for NaN. That's generic and doesn't require `<cmath>`? It works for floating types; for non-floating types, `a != a` is false, so it won't treat them as NaN. That's fine.\n\nThus final answer: Provide the three lines indented with 4 spaces.\n\nThus final output:\n\n```\n    if (a != a) return b;\n    if (b != b) return a;\n    return (a > b) ? a : b;\n```\n",
+      "reasoning_source": "thinking_model",
+      "action": {
+        "type": "code_submission",
+        "code": "if (a != a) return b;\n    if (b != b) return a;\n    return (a > b) ? a : b;",
+        "code_length": 75
+      },
+      "result": {
+        "compiles": true,
+        "tests_pass": true,
+        "test_summary": "PASSED",
+        "errors": [],
+        "llm_view": {
+          "compiles": true,
+          "tests_pass": true,
+          "test_summary": "PASSED",
+          "errors": []
+        },
+        "full_result": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nScanning dependencies of target nanort_functions\n[  2%] Building CXX object CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o\n[  5%] Linking CXX static library libnanort_functions.a\n[  5%] Built target nanort_functions\n[  8%] Linking CXX executable test_safe_minmax\n[ 11%] Built target test_safe_minmax\n[ 14%] Linking CXX executable test_get_bounding_box_of_triangle\n[ 17%] Built target test_get_bounding_box_of_triangle\n[ 20%] Linking CXX executable test_vneg\n[ 23%] Built target test_vneg\n[ 26%] Linking CXX executable test_operator_multiply\n[ 29%] Built target test_operator_multiply\n[ 32%] Linking CXX executable test_vdot\n[ 35%] Built target test_vdot\n[ 38%] Linking CXX executable test_find_cut_from_bin_buffer\n[ 41%] Built target test_find_cut_from_bin_buffer\n[ 44%] Linking CXX executable test_intersect_ray_aabb\n[ 47%] Built target test_intersect_ray_aabb\n[ 50%] Linking CXX executable test_vlength\n[ 52%] Built target test_vlength\n[ 55%] Linking CXX executable test_vcross\n[ 58%] Built target test_vcross\n[ 61%] Linking CXX executable test_scalar_multiply\n[ 64%] Built target test_scalar_multiply\n[ 67%] Linking CXX executable test_calculate_surface_area\n[ 70%] Built target test_calculate_surface_area\n[ 73%] Linking CXX executable test_vnormalize\n[ 76%] Built target test_vnormalize\n[ 79%] Linking CXX executable test_vsafe_inverse\n[ 82%] Built target test_vsafe_inverse\n[ 85%] Linking CXX executable test_sah\n[ 88%] Built target test_sah\n[ 91%] Linking CXX executable test_safemin\n[ 94%] Built target test_safemin\n[ 97%] Linking CXX executable test_safemax\n[100%] Built target test_safemax\nTest project /workspace/build\n      Start  1: test_vneg\n 1/16 Test  #1: test_vneg ...........................   Passed    0.00 sec\n      Start  2: test_operator_multiply\n 2/16 Test  #2: test_operator_multiply ..............   Passed    0.00 sec\n      Start  3: test_vlength\n 3/16 Test  #3: test_vlength ........................   Passed    0.00 sec\n      Start  4: test_vnormalize\n 4/16 Test  #4: test_vnormalize .....................   Passed    0.00 sec\n      Start  5: test_vcross\n 5/16 Test  #5: test_vcross .........................   Passed    0.00 sec\n      Start  6: test_vdot\n 6/16 Test  #6: test_vdot ...........................   Passed    0.00 sec\n      Start  7: test_vsafe_inverse\n 7/16 Test  #7: test_vsafe_inverse ..................   Passed    0.01 sec\n      Start  8: test_calculate_surface_area\n 8/16 Test  #8: test_calculate_surface_area .........   Passed    0.01 sec\n      Start  9: test_get_bounding_box_of_triangle\n 9/16 Test  #9: test_get_bounding_box_of_triangle ...   Passed    0.00 sec\n      Start 10: test_safemin\n10/16 Test #10: test_safemin ........................   Passed    0.01 sec\n      Start 11: test_safemax\n11/16 Test #11: test_safemax ........................   Passed    0.01 sec\n      Start 12: test_intersect_ray_aabb\n12/16 Test #12: test_intersect_ray_aabb .............   Passed    0.01 sec\n      Start 13: test_sah\n13/16 Test #13: test_sah ............................   Passed    0.01 sec\n      Start 14: test_find_cut_from_bin_buffer\n14/16 Test #14: test_find_cut_from_bin_buffer .......   Passed    0.00 sec\n      Start 15: test_safe_minmax\n15/16 Test #15: test_safe_minmax ....................   Passed    0.00 sec\n      Start 16: test_scalar_multiply\n16/16 Test #16: test_scalar_multiply ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 16\n\nTotal Test time (real) =   0.08 sec\n",
+          "stderr": "",
+          "returncode": 0,
+          "errors": [],
+          "logs": [
+            "[  8%] Linking CXX executable test_safe_minmax",
+            "[ 11%] Built target test_safe_minmax",
+            "[ 14%] Linking CXX executable test_get_bounding_box_of_triangle",
+            "[ 17%] Built target test_get_bounding_box_of_triangle",
+            "[ 20%] Linking CXX executable test_vneg",
+            "[ 23%] Built target test_vneg",
+            "[ 26%] Linking CXX executable test_operator_multiply",
+            "[ 29%] Built target test_operator_multiply",
+            "[ 32%] Linking CXX executable test_vdot",
+            "[ 35%] Built target test_vdot",
+            "[ 38%] Linking CXX executable test_find_cut_from_bin_buffer",
+            "[ 41%] Built target test_find_cut_from_bin_buffer",
+            "[ 44%] Linking CXX executable test_intersect_ray_aabb",
+            "[ 47%] Built target test_intersect_ray_aabb",
+            "[ 50%] Linking CXX executable test_vlength",
+            "[ 52%] Built target test_vlength",
+            "[ 55%] Linking CXX executable test_vcross",
+            "[ 58%] Built target test_vcross",
+            "[ 61%] Linking CXX executable test_scalar_multiply",
+            "[ 64%] Built target test_scalar_multiply",
+            "[ 67%] Linking CXX executable test_calculate_surface_area",
+            "[ 70%] Built target test_calculate_surface_area",
+            "[ 73%] Linking CXX executable test_vnormalize",
+            "[ 76%] Built target test_vnormalize",
+            "[ 79%] Linking CXX executable test_vsafe_inverse",
+            "[ 82%] Built target test_vsafe_inverse",
+            "[ 85%] Linking CXX executable test_sah",
+            "[ 88%] Built target test_sah",
+            "[ 91%] Linking CXX executable test_safemin",
+            "[ 94%] Built target test_safemin",
+            "[ 97%] Linking CXX executable test_safemax",
+            "[100%] Built target test_safemax",
+            "100% tests passed, 0 tests failed out of 16"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 9.980841875076294,
+      "tokens_used": 2106,
+      "token_breakdown": {
+        "completion_tokens": 2106,
+        "prompt_tokens": 2794,
+        "total_tokens": 4900,
+        "reasoning_tokens": 2157
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "if (a != a) return b;\n    if (b != b) return a;\n    return (a > b) ? a : b;",
+    "compiled": true,
+    "compile_error": null,
+    "failure_category": "success",
+    "compile_attempts": 0,
+    "last_compile_errors": [],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 1,
+    "total_tool_calls": 1,
+    "tokens_used": 2106,
+    "wall_clock_sec": 17.137728929519653,
+    "stop_reason": "submitted"
+  },
+  "test_results": {
+    "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nScanning dependencies of target nanort_functions\n[  2%] Building CXX object CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o\n[  5%] Linking CXX static library libnanort_functions.a\n[  5%] Built target nanort_functions\n[  8%] Linking CXX executable test_safe_minmax\n[ 11%] Built target test_safe_minmax\n[ 14%] Linking CXX executable test_get_bounding_box_of_triangle\n[ 17%] Built target test_get_bounding_box_of_triangle\n[ 20%] Linking CXX executable test_vneg\n[ 23%] Built target test_vneg\n[ 26%] Linking CXX executable test_operator_multiply\n[ 29%] Built target test_operator_multiply\n[ 32%] Linking CXX executable test_vdot\n[ 35%] Built target test_vdot\n[ 38%] Linking CXX executable test_find_cut_from_bin_buffer\n[ 41%] Built target test_find_cut_from_bin_buffer\n[ 44%] Linking CXX executable test_intersect_ray_aabb\n[ 47%] Built target test_intersect_ray_aabb\n[ 50%] Linking CXX executable test_vlength\n[ 52%] Built target test_vlength\n[ 55%] Linking CXX executable test_vcross\n[ 58%] Built target test_vcross\n[ 61%] Linking CXX executable test_scalar_multiply\n[ 64%] Built target test_scalar_multiply\n[ 67%] Linking CXX executable test_calculate_surface_area\n[ 70%] Built target test_calculate_surface_area\n[ 73%] Linking CXX executable test_vnormalize\n[ 76%] Built target test_vnormalize\n[ 79%] Linking CXX executable test_vsafe_inverse\n[ 82%] Built target test_vsafe_inverse\n[ 85%] Linking CXX executable test_sah\n[ 88%] Built target test_sah\n[ 91%] Linking CXX executable test_safemin\n[ 94%] Built target test_safemin\n[ 97%] Linking CXX executable test_safemax\n[100%] Built target test_safemax\nTest project /workspace/build\n      Start  1: test_vneg\n 1/16 Test  #1: test_vneg ...........................   Passed    0.00 sec\n      Start  2: test_operator_multiply\n 2/16 Test  #2: test_operator_multiply ..............   Passed    0.00 sec\n      Start  3: test_vlength\n 3/16 Test  #3: test_vlength ........................   Passed    0.00 sec\n      Start  4: test_vnormalize\n 4/16 Test  #4: test_vnormalize .....................   Passed    0.00 sec\n      Start  5: test_vcross\n 5/16 Test  #5: test_vcross .........................   Passed    0.00 sec\n      Start  6: test_vdot\n 6/16 Test  #6: test_vdot ...........................   Passed    0.00 sec\n      Start  7: test_vsafe_inverse\n 7/16 Test  #7: test_vsafe_inverse ..................   Passed    0.01 sec\n      Start  8: test_calculate_surface_area\n 8/16 Test  #8: test_calculate_surface_area .........   Passed    0.01 sec\n      Start  9: test_get_bounding_box_of_triangle\n 9/16 Test  #9: test_get_bounding_box_of_triangle ...   Passed    0.00 sec\n      Start 10: test_safemin\n10/16 Test #10: test_safemin ........................   Passed    0.01 sec\n      Start 11: test_safemax\n11/16 Test #11: test_safemax ........................   Passed    0.01 sec\n      Start 12: test_intersect_ray_aabb\n12/16 Test #12: test_intersect_ray_aabb .............   Passed    0.01 sec\n      Start 13: test_sah\n13/16 Test #13: test_sah ............................   Passed    0.01 sec\n      Start 14: test_find_cut_from_bin_buffer\n14/16 Test #14: test_find_cut_from_bin_buffer .......   Passed    0.00 sec\n      Start 15: test_safe_minmax\n15/16 Test #15: test_safe_minmax ....................   Passed    0.00 sec\n      Start 16: test_scalar_multiply\n16/16 Test #16: test_scalar_multiply ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 16\n\nTotal Test time (real) =   0.08 sec\n",
+    "stderr": "",
+    "returncode": 0,
+    "errors": [],
+    "logs": [
+      "[  8%] Linking CXX executable test_safe_minmax",
+      "[ 11%] Built target test_safe_minmax",
+      "[ 14%] Linking CXX executable test_get_bounding_box_of_triangle",
+      "[ 17%] Built target test_get_bounding_box_of_triangle",
+      "[ 20%] Linking CXX executable test_vneg",
+      "[ 23%] Built target test_vneg",
+      "[ 26%] Linking CXX executable test_operator_multiply",
+      "[ 29%] Built target test_operator_multiply",
+      "[ 32%] Linking CXX executable test_vdot",
+      "[ 35%] Built target test_vdot",
+      "[ 38%] Linking CXX executable test_find_cut_from_bin_buffer",
+      "[ 41%] Built target test_find_cut_from_bin_buffer",
+      "[ 44%] Linking CXX executable test_intersect_ray_aabb",
+      "[ 47%] Built target test_intersect_ray_aabb",
+      "[ 50%] Linking CXX executable test_vlength",
+      "[ 52%] Built target test_vlength",
+      "[ 55%] Linking CXX executable test_vcross",
+      "[ 58%] Built target test_vcross",
+      "[ 61%] Linking CXX executable test_scalar_multiply",
+      "[ 64%] Built target test_scalar_multiply",
+      "[ 67%] Linking CXX executable test_calculate_surface_area",
+      "[ 70%] Built target test_calculate_surface_area",
+      "[ 73%] Linking CXX executable test_vnormalize",
+      "[ 76%] Built target test_vnormalize",
+      "[ 79%] Linking CXX executable test_vsafe_inverse",
+      "[ 82%] Built target test_vsafe_inverse",
+      "[ 85%] Linking CXX executable test_sah",
+      "[ 88%] Built target test_sah",
+      "[ 91%] Linking CXX executable test_safemin",
+      "[ 94%] Built target test_safemin",
+      "[ 97%] Linking CXX executable test_safemax",
+      "[100%] Built target test_safemax",
+      "100% tests passed, 0 tests failed out of 16"
+    ]
+  },
+  "passed_tests": true
+}

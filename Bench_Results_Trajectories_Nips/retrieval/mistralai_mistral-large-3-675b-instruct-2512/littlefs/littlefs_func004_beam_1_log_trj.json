@@ -1,0 +1,178 @@
+{
+  "repo": "littlefs",
+  "task_id": "littlefs_func004",
+  "model": "mistralai/mistral-large-3-675b-instruct-2512",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "mode": "single_pass"
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 0,
+        "tool_calls_so_far": 0,
+        "tokens_so_far": 0,
+        "elapsed_time": 9.5367431640625e-06
+      },
+      "reasoning": "Single-pass zero-shot completion (no reasoning chain)",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "type": "code_submission",
+        "code": "// Check if lookahead buffer is empty\nif (lfs->free.off == lfs->free.size) {\n    // Refill lookahead buffer\n    lfs->free.off = 0;\n    int err = lfs_fs_rawtraverse(lfs, lfs->free.buffer, &lfs->free.size,\n            lfs->free.begin, lfs->free.end, LFS_TYPE_DIR, 0, NULL);\n    if (err) {\n        return err;\n    }\n\n    // Check if we found any free blocks\n    if (lfs->free.size == 0) {\n        return LFS_ERR_NOSPC;\n    }\n}\n\n// Find next free block using wear leveling\nlfs_block_t block_bits = 0;\nlfs_block_t block_count = 0;\nwhile (true) {\n    // Check if we've exhausted the lookahead buffer\n    if (lfs->free.off >= lfs->free.size) {\n        return LFS_ERR_NOSPC;\n    }\n\n    // Get next block bits\n    block_bits = ((uint32_t*)lfs->free.buffer)[lfs->free.off / 32];\n    block_count = lfs_ctz(~block_bits);\n\n    // Check if we found a free block\n    if (block_count < 32) {\n        break;\n    }\n\n    // Move to next block group\n    lfs->free.off += 32;\n}\n\n// Calculate block address\n*block = lfs->free.begin + lfs->free.off + block_count;\n\n// Mark block as used in lookahead buffer\n((uint32_t*)lfs->free.buffer)[lfs->free.off / 32] |= (1U << block_count);\n\n// Update lookahead offset\nlfs->free.off += block_count + 1;\n\n// Update wear count for wear leveling\nlfs->free.wear[*block - lfs->free.wear_begin]++;\n\n// Check if we need to update the wear distribution\nif (lfs->free.wear_size > 0 &&\n        lfs->free.wear[*block - lfs->free.wear_begin] >\n        lfs->free.wear_dist[lfs->free.wear_dist_len-1]) {\n    // Update wear distribution\n    lfs->free.wear_dist_len = 0;\n    for (lfs_block_t i = 0; i < lfs->free.wear_size; i++) {\n        if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n            lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n        }\n    }\n    lfs->free.wear_dist_len++;\n}\n\nreturn LFS_ERR_OK;",
+        "code_length": 1858
+      },
+      "result": {
+        "compiles": false,
+        "tests_pass": false,
+        "test_summary": "FAILED",
+        "errors": [
+          "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope",
+          "/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope",
+          "/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'",
+          "/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+          "/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+          "/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+          "/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+          "/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+          "/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+          "/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'"
+        ],
+        "full_test_results": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nConsolidate compiler generated dependencies of target lfs_functions\n[  3%] Building CXX object CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o\n",
+          "stderr": "/workspace/src/lfs_functions.cpp: In function 'int lfs_alloc(lfs_t*, lfs_block_t*)':\n/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope\n  159 |               lfs->free.begin, lfs->free.end, LFS_TYPE_DIR, 0, NULL);\n      |                                               ^~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope\n  158 |       int err = lfs_fs_rawtraverse(lfs, lfs->free.buffer, &lfs->free.size,\n      |                 ^~~~~~~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'\n  181 |       block_count = lfs_ctz(~block_bits);\n      |                                        ^\nIn file included from /workspace/src/lfs_functions.cpp:1:\n/workspace/src/lfs_functions.h:68:8: note: candidate: 'lfs_ctz::lfs_ctz()'\n   68 | struct lfs_ctz {\n      |        ^~~~~~~\n/workspace/src/lfs_functions.h:68:8: note:   candidate expects 0 arguments, 1 provided\n/workspace/src/lfs_functions.h:68:8: note: candidate: 'constexpr lfs_ctz::lfs_ctz(const lfs_ctz&)'\n/workspace/src/lfs_functions.h:68:8: note:   no known conversion for argument 1 from 'lfs_block_t' {aka 'unsigned int'} to 'const lfs_ctz&'\n/workspace/src/lfs_functions.h:68:8: note: candidate: 'constexpr lfs_ctz::lfs_ctz(lfs_ctz&&)'\n/workspace/src/lfs_functions.h:68:8: note:   no known conversion for argument 1 from 'lfs_block_t' {aka 'unsigned int'} to 'lfs_ctz&&'\n/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  202 |   lfs->free.wear[*block - lfs->free.wear_begin]++;\n      |             ^~~~\n/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'\n  202 |   lfs->free.wear[*block - lfs->free.wear_begin]++;\n      |                                     ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'\n  205 |   if (lfs->free.wear_size > 0 &&\n      |                 ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  206 |           lfs->free.wear[*block - lfs->free.wear_begin] >\n      |                     ^~~~\n/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'\n  206 |           lfs->free.wear[*block - lfs->free.wear_begin] >\n      |                                             ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n  207 |           lfs->free.wear_dist[lfs->free.wear_dist_len-1]) {\n      |                     ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  207 |           lfs->free.wear_dist[lfs->free.wear_dist_len-1]) {\n      |                                         ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:209:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  209 |       lfs->free.wear_dist_len = 0;\n      |                 ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:210:45: error: 'struct lfs::<unnamed>' has no member named 'wear_size'\n  210 |       for (lfs_block_t i = 0; i < lfs->free.wear_size; i++) {\n      |                                             ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:211:25: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  211 |           if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n      |                         ^~~~\n/workspace/src/lfs_functions.cpp:211:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n  211 |           if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n      |                                             ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:211:65: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  211 |           if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n      |                                                                 ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:212:25: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n  212 |               lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n      |                         ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:212:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  212 |               lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n      |                                             ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:212:72: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  212 |               lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n      |                                                                        ^~~~\n/workspace/src/lfs_functions.cpp:215:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  215 |       lfs->free.wear_dist_len++;\n      |                 ^~~~~~~~~~~~~\nmake[2]: *** [CMakeFiles/lfs_functions.dir/build.make:76: CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:107: CMakeFiles/lfs_functions.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope",
+            "/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope",
+            "/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'",
+            "/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+            "/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+            "/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+            "/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+            "/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:209:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:210:45: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+            "/workspace/src/lfs_functions.cpp:211:25: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:211:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+            "/workspace/src/lfs_functions.cpp:211:65: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:212:25: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+            "/workspace/src/lfs_functions.cpp:212:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:212:72: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:215:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'"
+          ],
+          "logs": [
+            "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope",
+            "/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope",
+            "/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'",
+            "/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+            "/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+            "/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+            "/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+            "/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:209:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:210:45: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+            "/workspace/src/lfs_functions.cpp:211:25: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:211:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+            "/workspace/src/lfs_functions.cpp:211:65: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:212:25: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+            "/workspace/src/lfs_functions.cpp:212:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+            "/workspace/src/lfs_functions.cpp:212:72: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+            "/workspace/src/lfs_functions.cpp:215:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 11.452247858047485,
+      "tokens_used": 8252,
+      "token_breakdown": {
+        "completion_tokens": 610,
+        "prompt_tokens": 7642,
+        "total_tokens": 8252
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "// Check if lookahead buffer is empty\nif (lfs->free.off == lfs->free.size) {\n    // Refill lookahead buffer\n    lfs->free.off = 0;\n    int err = lfs_fs_rawtraverse(lfs, lfs->free.buffer, &lfs->free.size,\n            lfs->free.begin, lfs->free.end, LFS_TYPE_DIR, 0, NULL);\n    if (err) {\n        return err;\n    }\n\n    // Check if we found any free blocks\n    if (lfs->free.size == 0) {\n        return LFS_ERR_NOSPC;\n    }\n}\n\n// Find next free block using wear leveling\nlfs_block_t block_bits = 0;\nlfs_block_t block_count = 0;\nwhile (true) {\n    // Check if we've exhausted the lookahead buffer\n    if (lfs->free.off >= lfs->free.size) {\n        return LFS_ERR_NOSPC;\n    }\n\n    // Get next block bits\n    block_bits = ((uint32_t*)lfs->free.buffer)[lfs->free.off / 32];\n    block_count = lfs_ctz(~block_bits);\n\n    // Check if we found a free block\n    if (block_count < 32) {\n        break;\n    }\n\n    // Move to next block group\n    lfs->free.off += 32;\n}\n\n// Calculate block address\n*block = lfs->free.begin + lfs->free.off + block_count;\n\n// Mark block as used in lookahead buffer\n((uint32_t*)lfs->free.buffer)[lfs->free.off / 32] |= (1U << block_count);\n\n// Update lookahead offset\nlfs->free.off += block_count + 1;\n\n// Update wear count for wear leveling\nlfs->free.wear[*block - lfs->free.wear_begin]++;\n\n// Check if we need to update the wear distribution\nif (lfs->free.wear_size > 0 &&\n        lfs->free.wear[*block - lfs->free.wear_begin] >\n        lfs->free.wear_dist[lfs->free.wear_dist_len-1]) {\n    // Update wear distribution\n    lfs->free.wear_dist_len = 0;\n    for (lfs_block_t i = 0; i < lfs->free.wear_size; i++) {\n        if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n            lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n        }\n    }\n    lfs->free.wear_dist_len++;\n}\n\nreturn LFS_ERR_OK;",
+    "compiled": false,
+    "compile_error": "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope\n/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope\n/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'\n/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'\n/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'\n/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'\n/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'\n/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'\n/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+    "failure_category": "compilation_error",
+    "compile_attempts": 1,
+    "last_compile_errors": [
+      "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope",
+      "/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope",
+      "/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'",
+      "/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+      "/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+      "/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+      "/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'"
+    ],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 1,
+    "total_tool_calls": 0,
+    "tokens_used": 8252,
+    "wall_clock_sec": 11.452247858047485,
+    "stop_reason": "single_pass_complete"
+  },
+  "test_results": {
+    "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nConsolidate compiler generated dependencies of target lfs_functions\n[  3%] Building CXX object CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o\n",
+    "stderr": "/workspace/src/lfs_functions.cpp: In function 'int lfs_alloc(lfs_t*, lfs_block_t*)':\n/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope\n  159 |               lfs->free.begin, lfs->free.end, LFS_TYPE_DIR, 0, NULL);\n      |                                               ^~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope\n  158 |       int err = lfs_fs_rawtraverse(lfs, lfs->free.buffer, &lfs->free.size,\n      |                 ^~~~~~~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'\n  181 |       block_count = lfs_ctz(~block_bits);\n      |                                        ^\nIn file included from /workspace/src/lfs_functions.cpp:1:\n/workspace/src/lfs_functions.h:68:8: note: candidate: 'lfs_ctz::lfs_ctz()'\n   68 | struct lfs_ctz {\n      |        ^~~~~~~\n/workspace/src/lfs_functions.h:68:8: note:   candidate expects 0 arguments, 1 provided\n/workspace/src/lfs_functions.h:68:8: note: candidate: 'constexpr lfs_ctz::lfs_ctz(const lfs_ctz&)'\n/workspace/src/lfs_functions.h:68:8: note:   no known conversion for argument 1 from 'lfs_block_t' {aka 'unsigned int'} to 'const lfs_ctz&'\n/workspace/src/lfs_functions.h:68:8: note: candidate: 'constexpr lfs_ctz::lfs_ctz(lfs_ctz&&)'\n/workspace/src/lfs_functions.h:68:8: note:   no known conversion for argument 1 from 'lfs_block_t' {aka 'unsigned int'} to 'lfs_ctz&&'\n/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  202 |   lfs->free.wear[*block - lfs->free.wear_begin]++;\n      |             ^~~~\n/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'\n  202 |   lfs->free.wear[*block - lfs->free.wear_begin]++;\n      |                                     ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'\n  205 |   if (lfs->free.wear_size > 0 &&\n      |                 ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  206 |           lfs->free.wear[*block - lfs->free.wear_begin] >\n      |                     ^~~~\n/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'\n  206 |           lfs->free.wear[*block - lfs->free.wear_begin] >\n      |                                             ^~~~~~~~~~\n/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n  207 |           lfs->free.wear_dist[lfs->free.wear_dist_len-1]) {\n      |                     ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  207 |           lfs->free.wear_dist[lfs->free.wear_dist_len-1]) {\n      |                                         ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:209:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  209 |       lfs->free.wear_dist_len = 0;\n      |                 ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:210:45: error: 'struct lfs::<unnamed>' has no member named 'wear_size'\n  210 |       for (lfs_block_t i = 0; i < lfs->free.wear_size; i++) {\n      |                                             ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:211:25: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  211 |           if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n      |                         ^~~~\n/workspace/src/lfs_functions.cpp:211:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n  211 |           if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n      |                                             ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:211:65: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  211 |           if (lfs->free.wear[i] > lfs->free.wear_dist[lfs->free.wear_dist_len]) {\n      |                                                                 ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:212:25: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'\n  212 |               lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n      |                         ^~~~~~~~~\n/workspace/src/lfs_functions.cpp:212:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  212 |               lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n      |                                             ^~~~~~~~~~~~~\n/workspace/src/lfs_functions.cpp:212:72: error: 'struct lfs::<unnamed>' has no member named 'wear'\n  212 |               lfs->free.wear_dist[lfs->free.wear_dist_len] = lfs->free.wear[i];\n      |                                                                        ^~~~\n/workspace/src/lfs_functions.cpp:215:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'\n  215 |       lfs->free.wear_dist_len++;\n      |                 ^~~~~~~~~~~~~\nmake[2]: *** [CMakeFiles/lfs_functions.dir/build.make:76: CMakeFiles/lfs_functions.dir/src/lfs_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:107: CMakeFiles/lfs_functions.dir/all] Error 2\nmake: *** [Makefile:101: all] Error 2\n",
+    "returncode": 2,
+    "errors": [
+      "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope",
+      "/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope",
+      "/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'",
+      "/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+      "/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+      "/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+      "/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:209:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:210:45: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+      "/workspace/src/lfs_functions.cpp:211:25: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:211:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:211:65: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:212:25: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:212:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:212:72: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:215:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'"
+    ],
+    "logs": [
+      "/workspace/src/lfs_functions.cpp:159:47: error: 'LFS_TYPE_DIR' was not declared in this scope",
+      "/workspace/src/lfs_functions.cpp:158:17: error: 'lfs_fs_rawtraverse' was not declared in this scope",
+      "/workspace/src/lfs_functions.cpp:181:40: error: no matching function for call to 'lfs_ctz::lfs_ctz(lfs_block_t)'",
+      "/workspace/src/lfs_functions.cpp:202:13: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:202:37: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+      "/workspace/src/lfs_functions.cpp:205:17: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+      "/workspace/src/lfs_functions.cpp:206:21: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:206:45: error: 'struct lfs::<unnamed>' has no member named 'wear_begin'",
+      "/workspace/src/lfs_functions.cpp:207:21: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:207:41: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:209:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:210:45: error: 'struct lfs::<unnamed>' has no member named 'wear_size'",
+      "/workspace/src/lfs_functions.cpp:211:25: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:211:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:211:65: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:212:25: error: 'struct lfs::<unnamed>' has no member named 'wear_dist'",
+      "/workspace/src/lfs_functions.cpp:212:45: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'",
+      "/workspace/src/lfs_functions.cpp:212:72: error: 'struct lfs::<unnamed>' has no member named 'wear'",
+      "/workspace/src/lfs_functions.cpp:215:17: error: 'struct lfs::<unnamed>' has no member named 'wear_dist_len'"
+    ]
+  },
+  "passed_tests": false
+}

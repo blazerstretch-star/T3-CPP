@@ -1,0 +1,142 @@
+{
+  "repo": "nanort",
+  "task_id": "nanort_func014",
+  "model": "qwen/qwen3-next-80b-a3b-instruct",
+  "beam_id": 1,
+  "temperature": 0.0,
+  "budget": {
+    "mode": "single_pass"
+  },
+  "trajectory": [
+    {
+      "step_id": 1,
+      "state": {
+        "iteration": 0,
+        "tool_calls_so_far": 0,
+        "tokens_so_far": 0,
+        "elapsed_time": 9.775161743164062e-06
+      },
+      "reasoning": "Single-pass zero-shot completion (no reasoning chain)",
+      "reasoning_content": null,
+      "reasoning_source": "plain_text",
+      "action": {
+        "type": "code_submission",
+        "code": "constexpr int kBinSize = 16;\nconstexpr float kEpsilon = 1e-6f;\n\nreal3<T> extent = bmax - bmin;\nreal3<T> inv_extent;\nif (extent[0] > kEpsilon) inv_extent[0] = 1.0f / extent[0];\nelse inv_extent[0] = 0.0f;\nif (extent[1] > kEpsilon) inv_extent[1] = 1.0f / extent[1];\nelse inv_extent[1] = 0.0f;\nif (extent[2] > kEpsilon) inv_extent[2] = 1.0f / extent[2];\nelse inv_extent[2] = 0.0f;\n\nT bin_width[3];\nbin_width[0] = extent[0] / static_cast<T>(kBinSize);\nbin_width[1] = extent[1] / static_cast<T>(kBinSize);\nbin_width[2] = extent[2] / static_cast<T>(kBinSize);\n\nint total_prims = bins->num_primitives();\nif (total_prims <= 1) return false;\n\nT min_cost = std::numeric_limits<T>::max();\nint best_axis = -1;\nreal3<T> best_cut_pos;\n\nfor (int axis = 0; axis < 3; ++axis) {\n    if (extent[axis] <= kEpsilon) continue;\n\n    // Initialize bin counters\n    std::fill(bins->bin_counts()[axis], bins->bin_counts()[axis] + kBinSize, 0);\n    std::fill(bins->bin_start()[axis], bins->bin_start()[axis] + kBinSize, 0);\n    std::fill(bins->bin_end()[axis], bins->bin_end()[axis] + kBinSize, 0);\n\n    // Bin primitives\n    for (int i = 0; i < total_prims; ++i) {\n        T center = bins->bin_centers()[axis][i];\n        int bin_idx = static_cast<int>((center - bmin[axis]) * inv_extent[axis] * static_cast<T>(kBinSize));\n        if (bin_idx < 0) bin_idx = 0;\n        if (bin_idx >= kBinSize) bin_idx = kBinSize - 1;\n        bins->bin_counts()[axis][bin_idx]++;\n    }\n\n    // Compute prefix sums for left and right counts\n    int left_count = 0;\n    for (int i = 0; i < kBinSize - 1; ++i) {\n        left_count += bins->bin_counts()[axis][i];\n        int right_count = total_prims - left_count;\n        if (left_count == 0 || right_count == 0) continue;\n\n        // Compute SAH cost\n        T left_area = 1.0f;\n        T right_area = 1.0f;\n        T cut_pos = bmin[axis] + (i + 1) * bin_width[axis];\n        real3<T> left_extent = bmax - bmin;\n        real3<T> right_extent = bmax - bmin;\n        left_extent[axis] = cut_pos - bmin[axis];\n        right_extent[axis] = bmax[axis] - cut_pos;\n\n        if (left_extent[0] < kEpsilon) left_extent[0] = kEpsilon;\n        if (left_extent[1] < kEpsilon) left_extent[1] = kEpsilon;\n        if (left_extent[2] < kEpsilon) left_extent[2] = kEpsilon;\n        if (right_extent[0] < kEpsilon) right_extent[0] = kEpsilon;\n        if (right_extent[1] < kEpsilon) right_extent[1] = kEpsilon;\n        if (right_extent[2] < kEpsilon) right_extent[2] = kEpsilon;\n\n        left_area = 2.0f * (left_extent[0] * left_extent[1] + left_extent[1] * left_extent[2] + left_extent[2] * left_extent[0]);\n        right_area = 2.0f * (right_extent[0] * right_extent[1] + right_extent[1] * right_extent[2] + right_extent[2] * right_extent[0]);\n\n        T cost = left_area * static_cast<T>(left_count) + right_area * static_cast<T>(right_count);\n        if (cost < min_cost) {\n            min_cost = cost;\n            best_axis = axis;\n            best_cut_pos[axis] = cut_pos;\n        }\n    }\n}\n\nif (best_axis == -1) return false;\n\n// Output results\ncut_pos[0] = best_cut_pos[0];\ncut_pos[1] = best_cut_pos[1];\ncut_pos[2] = best_cut_pos[2];\n*minCostAxis = best_axis;\n\nreturn true;",
+        "code_length": 3169
+      },
+      "result": {
+        "compiles": false,
+        "tests_pass": false,
+        "test_summary": "FAILED",
+        "errors": [
+          "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'",
+          "/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+          "/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+          "/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+          "/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+          "/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+          "/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+          "/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'",
+          "/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+          "/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'"
+        ],
+        "full_test_results": {
+          "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nScanning dependencies of target nanort_functions\n[  2%] Building CXX object CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o\n",
+          "stderr": "/workspace/src/nanort_functions.cpp: In instantiation of 'bool nanort::FindCutFromBinBuffer(T*, int*, nanort::BinBuffer<T>*, const nanort::real3<T>&, const nanort::real3<T>&) [with T = float]':\n/workspace/src/nanort_functions.cpp:313:116:   required from here\n/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'\n  229 |   int total_prims = bins->num_primitives();\n      |                     ~~~~~~^~~~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  240 |       std::fill(bins->bin_counts()[axis], bins->bin_counts()[axis] + kBinSize, 0);\n      |                 ~~~~~~^~~~~~~~~~\n/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  240 |       std::fill(bins->bin_counts()[axis], bins->bin_counts()[axis] + kBinSize, 0);\n      |                                           ~~~~~~^~~~~~~~~~\n/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'\n  241 |       std::fill(bins->bin_start()[axis], bins->bin_start()[axis] + kBinSize, 0);\n      |                 ~~~~~~^~~~~~~~~\n/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'\n  241 |       std::fill(bins->bin_start()[axis], bins->bin_start()[axis] + kBinSize, 0);\n      |                                          ~~~~~~^~~~~~~~~\n/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'\n  242 |       std::fill(bins->bin_end()[axis], bins->bin_end()[axis] + kBinSize, 0);\n      |                 ~~~~~~^~~~~~~\n/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'\n  242 |       std::fill(bins->bin_end()[axis], bins->bin_end()[axis] + kBinSize, 0);\n      |                                        ~~~~~~^~~~~~~\n/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'\n  246 |           T center = bins->bin_centers()[axis][i];\n      |                      ~~~~~~^~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  250 |           bins->bin_counts()[axis][bin_idx]++;\n      |           ~~~~~~^~~~~~~~~~\n/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  256 |           left_count += bins->bin_counts()[axis][i];\n      |                         ~~~~~~^~~~~~~~~~\nmake[2]: *** [CMakeFiles/nanort_functions.dir/build.make:63: CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:216: CMakeFiles/nanort_functions.dir/all] Error 2\nmake: *** [Makefile:95: all] Error 2\n",
+          "returncode": 2,
+          "errors": [
+            "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'",
+            "/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+            "/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+            "/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+            "/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+            "/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+            "/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+            "/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'",
+            "/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+            "/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'"
+          ],
+          "logs": [
+            "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'",
+            "/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+            "/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+            "/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+            "/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+            "/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+            "/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+            "/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'",
+            "/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+            "/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'"
+          ]
+        }
+      },
+      "api_status": "ok",
+      "api_error": "na",
+      "api_duration_sec": 21.704288244247437,
+      "tokens_used": 9519,
+      "token_breakdown": {
+        "completion_tokens": 1048,
+        "prompt_tokens": 8471,
+        "total_tokens": 9519
+      },
+      "is_thinking_model": false
+    }
+  ],
+  "final_submission": {
+    "code": "constexpr int kBinSize = 16;\nconstexpr float kEpsilon = 1e-6f;\n\nreal3<T> extent = bmax - bmin;\nreal3<T> inv_extent;\nif (extent[0] > kEpsilon) inv_extent[0] = 1.0f / extent[0];\nelse inv_extent[0] = 0.0f;\nif (extent[1] > kEpsilon) inv_extent[1] = 1.0f / extent[1];\nelse inv_extent[1] = 0.0f;\nif (extent[2] > kEpsilon) inv_extent[2] = 1.0f / extent[2];\nelse inv_extent[2] = 0.0f;\n\nT bin_width[3];\nbin_width[0] = extent[0] / static_cast<T>(kBinSize);\nbin_width[1] = extent[1] / static_cast<T>(kBinSize);\nbin_width[2] = extent[2] / static_cast<T>(kBinSize);\n\nint total_prims = bins->num_primitives();\nif (total_prims <= 1) return false;\n\nT min_cost = std::numeric_limits<T>::max();\nint best_axis = -1;\nreal3<T> best_cut_pos;\n\nfor (int axis = 0; axis < 3; ++axis) {\n    if (extent[axis] <= kEpsilon) continue;\n\n    // Initialize bin counters\n    std::fill(bins->bin_counts()[axis], bins->bin_counts()[axis] + kBinSize, 0);\n    std::fill(bins->bin_start()[axis], bins->bin_start()[axis] + kBinSize, 0);\n    std::fill(bins->bin_end()[axis], bins->bin_end()[axis] + kBinSize, 0);\n\n    // Bin primitives\n    for (int i = 0; i < total_prims; ++i) {\n        T center = bins->bin_centers()[axis][i];\n        int bin_idx = static_cast<int>((center - bmin[axis]) * inv_extent[axis] * static_cast<T>(kBinSize));\n        if (bin_idx < 0) bin_idx = 0;\n        if (bin_idx >= kBinSize) bin_idx = kBinSize - 1;\n        bins->bin_counts()[axis][bin_idx]++;\n    }\n\n    // Compute prefix sums for left and right counts\n    int left_count = 0;\n    for (int i = 0; i < kBinSize - 1; ++i) {\n        left_count += bins->bin_counts()[axis][i];\n        int right_count = total_prims - left_count;\n        if (left_count == 0 || right_count == 0) continue;\n\n        // Compute SAH cost\n        T left_area = 1.0f;\n        T right_area = 1.0f;\n        T cut_pos = bmin[axis] + (i + 1) * bin_width[axis];\n        real3<T> left_extent = bmax - bmin;\n        real3<T> right_extent = bmax - bmin;\n        left_extent[axis] = cut_pos - bmin[axis];\n        right_extent[axis] = bmax[axis] - cut_pos;\n\n        if (left_extent[0] < kEpsilon) left_extent[0] = kEpsilon;\n        if (left_extent[1] < kEpsilon) left_extent[1] = kEpsilon;\n        if (left_extent[2] < kEpsilon) left_extent[2] = kEpsilon;\n        if (right_extent[0] < kEpsilon) right_extent[0] = kEpsilon;\n        if (right_extent[1] < kEpsilon) right_extent[1] = kEpsilon;\n        if (right_extent[2] < kEpsilon) right_extent[2] = kEpsilon;\n\n        left_area = 2.0f * (left_extent[0] * left_extent[1] + left_extent[1] * left_extent[2] + left_extent[2] * left_extent[0]);\n        right_area = 2.0f * (right_extent[0] * right_extent[1] + right_extent[1] * right_extent[2] + right_extent[2] * right_extent[0]);\n\n        T cost = left_area * static_cast<T>(left_count) + right_area * static_cast<T>(right_count);\n        if (cost < min_cost) {\n            min_cost = cost;\n            best_axis = axis;\n            best_cut_pos[axis] = cut_pos;\n        }\n    }\n}\n\nif (best_axis == -1) return false;\n\n// Output results\ncut_pos[0] = best_cut_pos[0];\ncut_pos[1] = best_cut_pos[1];\ncut_pos[2] = best_cut_pos[2];\n*minCostAxis = best_axis;\n\nreturn true;",
+    "compiled": false,
+    "compile_error": "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'\n/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'\n/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'\n/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'\n/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'\n/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'\n/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+    "failure_category": "compilation_error",
+    "compile_attempts": 1,
+    "last_compile_errors": [
+      "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'",
+      "/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+      "/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+      "/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+      "/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+      "/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'",
+      "/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'"
+    ],
+    "ast_score": 1.0
+  },
+  "metrics": {
+    "total_steps": 1,
+    "total_tool_calls": 0,
+    "tokens_used": 9519,
+    "wall_clock_sec": 21.704288244247437,
+    "stop_reason": "single_pass_complete"
+  },
+  "test_results": {
+    "stdout": "-- Configuring done\n-- Generating done\n-- Build files have been written to: /workspace/build\nScanning dependencies of target nanort_functions\n[  2%] Building CXX object CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o\n",
+    "stderr": "/workspace/src/nanort_functions.cpp: In instantiation of 'bool nanort::FindCutFromBinBuffer(T*, int*, nanort::BinBuffer<T>*, const nanort::real3<T>&, const nanort::real3<T>&) [with T = float]':\n/workspace/src/nanort_functions.cpp:313:116:   required from here\n/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'\n  229 |   int total_prims = bins->num_primitives();\n      |                     ~~~~~~^~~~~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  240 |       std::fill(bins->bin_counts()[axis], bins->bin_counts()[axis] + kBinSize, 0);\n      |                 ~~~~~~^~~~~~~~~~\n/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  240 |       std::fill(bins->bin_counts()[axis], bins->bin_counts()[axis] + kBinSize, 0);\n      |                                           ~~~~~~^~~~~~~~~~\n/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'\n  241 |       std::fill(bins->bin_start()[axis], bins->bin_start()[axis] + kBinSize, 0);\n      |                 ~~~~~~^~~~~~~~~\n/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'\n  241 |       std::fill(bins->bin_start()[axis], bins->bin_start()[axis] + kBinSize, 0);\n      |                                          ~~~~~~^~~~~~~~~\n/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'\n  242 |       std::fill(bins->bin_end()[axis], bins->bin_end()[axis] + kBinSize, 0);\n      |                 ~~~~~~^~~~~~~\n/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'\n  242 |       std::fill(bins->bin_end()[axis], bins->bin_end()[axis] + kBinSize, 0);\n      |                                        ~~~~~~^~~~~~~\n/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'\n  246 |           T center = bins->bin_centers()[axis][i];\n      |                      ~~~~~~^~~~~~~~~~~\n/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  250 |           bins->bin_counts()[axis][bin_idx]++;\n      |           ~~~~~~^~~~~~~~~~\n/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'\n  256 |           left_count += bins->bin_counts()[axis][i];\n      |                         ~~~~~~^~~~~~~~~~\nmake[2]: *** [CMakeFiles/nanort_functions.dir/build.make:63: CMakeFiles/nanort_functions.dir/src/nanort_functions.cpp.o] Error 1\nmake[1]: *** [CMakeFiles/Makefile2:216: CMakeFiles/nanort_functions.dir/all] Error 2\nmake: *** [Makefile:95: all] Error 2\n",
+    "returncode": 2,
+    "errors": [
+      "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'",
+      "/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+      "/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+      "/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+      "/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+      "/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'",
+      "/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'"
+    ],
+    "logs": [
+      "/workspace/src/nanort_functions.cpp:229:27: error: 'struct nanort::BinBuffer<float>' has no member named 'num_primitives'",
+      "/workspace/src/nanort_functions.cpp:240:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:240:49: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:241:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+      "/workspace/src/nanort_functions.cpp:241:48: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_start'",
+      "/workspace/src/nanort_functions.cpp:242:23: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+      "/workspace/src/nanort_functions.cpp:242:46: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_end'",
+      "/workspace/src/nanort_functions.cpp:246:28: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_centers'",
+      "/workspace/src/nanort_functions.cpp:250:17: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'",
+      "/workspace/src/nanort_functions.cpp:256:31: error: 'struct nanort::BinBuffer<float>' has no member named 'bin_counts'"
+    ]
+  },
+  "passed_tests": false
+}
