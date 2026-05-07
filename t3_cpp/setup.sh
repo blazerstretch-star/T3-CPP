@@ -1,9 +1,11 @@
 #!/bin/bash
 # setup.sh
-# Clones the 3 excluded benchmark repositories (hospital, movie_recommendation, suffixtree)
-# into their respective context/ folders, then sets up the Python environment.
+# Clones excluded benchmark repositories into their respective context/ folders,
+# then sets up the Python environment.
 #
-# These repos are excluded from the public dataset release due to licensing restrictions.
+# Excluded repos fall into two categories:
+#   - No-license repos (hospital, movie_recommendation, suffixtree, cpp-projects)
+#   - GPL-3.0 repos (cg3lib, cgal, prepair, route_planning, numerical_methods)
 # See README.md (Dataset License Compliance Notice) for details.
 
 set -e
@@ -35,20 +37,47 @@ clone_if_empty() {
     fi
 }
 
+# ── No-license repos ──────────────────────────────────────────────────────────
 clone_if_empty \
     "https://github.com/AzkaSahar/hospital-management-system" \
-    "${BENCHMARKS_DIR}/hospital/context/hospital-management-system" \
+    "${BENCHMARKS_DIR}/hospital/context" \
     "hospital"
 
 clone_if_empty \
     "https://github.com/FaizaanAlFaisal/Movie-Recommendation-System" \
-    "${BENCHMARKS_DIR}/movie_recommendation/context/Movie-Recommendation-System" \
+    "${BENCHMARKS_DIR}/movie_recommendation/context" \
     "movie_recommendation"
 
 clone_if_empty \
     "https://github.com/natrux/suffixtree" \
-    "${BENCHMARKS_DIR}/suffixtree/context/suffixtree" \
+    "${BENCHMARKS_DIR}/suffixtree/context" \
     "suffixtree"
+
+# ── GPL-3.0 repos ─────────────────────────────────────────────────────────────
+clone_if_empty \
+    "https://github.com/cg3hci/cg3lib" \
+    "${BENCHMARKS_DIR}/cg3lib/context" \
+    "cg3lib"
+
+clone_if_empty \
+    "https://github.com/CGAL/cgal" \
+    "${BENCHMARKS_DIR}/cgal_kernel/context" \
+    "cgal"
+
+clone_if_empty \
+    "https://github.com/tudelft3d/prepair" \
+    "${BENCHMARKS_DIR}/prepair/context" \
+    "prepair"
+
+clone_if_empty \
+    "https://github.com/udacity/CppND-Route-Planning-Project" \
+    "${BENCHMARKS_DIR}/route_planning/context" \
+    "route_planning"
+
+clone_if_empty \
+    "https://github.com/nicolezattarin/Numerical-Methods-Physics" \
+    "${BENCHMARKS_DIR}/numerical_methods/context" \
+    "numerical_methods"
 
 echo ""
 echo "Step 2: Installing Python dependencies..."

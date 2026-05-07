@@ -40,12 +40,29 @@ data/
 ## Setup
 
 ```bash
-bash setup.sh
+bash t3_cpp/setup.sh
 ```
 
-This will:
-1. Clone the 3 excluded benchmark repositories into `benchmarks/` (see License section)
-2. Install Python dependencies from `requirements.txt`
+`setup.sh` does two things:
+
+**Step 1 — Clone excluded benchmark repositories**
+
+8 repositories are excluded from the public release due to licensing (3 no-license, 5 GPL-3.0). The script clones each one with `--depth=1` into its `benchmarks/<repo>/context/` folder. It is idempotent — if a folder is already populated it skips that repo.
+
+| Repository | License | Cloned into |
+|------------|---------|-------------|
+| `hospital` | No license | `benchmarks/hospital/context/` |
+| `movie_recommendation` | No license | `benchmarks/movie_recommendation/context/` |
+| `suffixtree` | No license | `benchmarks/suffixtree/context/` |
+| `cg3lib` | GPL-3.0 | `benchmarks/cg3lib/context/` |
+| `cgal_kernel` | GPL-3.0 | `benchmarks/cgal_kernel/context/` |
+| `prepair` | GPL-3.0 | `benchmarks/prepair/context/` |
+| `route_planning` | GPL-3.0 | `benchmarks/route_planning/context/` |
+| `numerical_methods` | GPL-3.0 | `benchmarks/numerical_methods/context/` |
+
+**Step 2 — Install Python dependencies**
+
+Installs from `MCTS_LABELED_FINAL_TUE_02_20_PM/Scripts/training/PRM_JUDGE/requirements_main.txt`. If the file is not found, it prints the manual install command.
 
 ---
 
@@ -181,12 +198,20 @@ Used for the oracle upper-bound setting.
 
 ## Adding Excluded Repositories
 
-Due to licensing restrictions, 3 repositories are excluded from the public release but their benchmark tasks are included. `setup.sh` clones them automatically, or manually:
+Due to licensing restrictions, 8 repositories are excluded from the public release but their benchmark tasks are included. `setup.sh` clones them automatically, or manually:
 
 ```bash
-git clone https://github.com/AzkaSahar/hospital-management-system benchmarks/hospital/context/hospital-management-system
-git clone https://github.com/FaizaanAlFaisal/Movie-Recommendation-System benchmarks/movie_recommendation/context/Movie-Recommendation-System
-git clone https://github.com/natrux/suffixtree benchmarks/suffixtree/context/suffixtree
+# No-license repos
+git clone --depth=1 https://github.com/AzkaSahar/hospital-management-system        benchmarks/hospital/context
+git clone --depth=1 https://github.com/FaizaanAlFaisal/Movie-Recommendation-System  benchmarks/movie_recommendation/context
+git clone --depth=1 https://github.com/natrux/suffixtree                            benchmarks/suffixtree/context
+
+# GPL-3.0 repos
+git clone --depth=1 https://github.com/cg3hci/cg3lib                               benchmarks/cg3lib/context
+git clone --depth=1 https://github.com/CGAL/cgal                                    benchmarks/cgal_kernel/context
+git clone --depth=1 https://github.com/tudelft3d/prepair                            benchmarks/prepair/context
+git clone --depth=1 https://github.com/udacity/CppND-Route-Planning-Project         benchmarks/route_planning/context
+git clone --depth=1 https://github.com/nicolezattarin/Numerical-Methods-Physics     benchmarks/numerical_methods/context
 ```
 
 ---
@@ -378,12 +403,19 @@ The full dataset comprised **135,259 trajectories** and **1,189,367 labeled step
 
 Due to licensing restrictions, the following repositories **cannot be redistributed**:
 
-| Repository | Removed Raw Trajectories | Removed Steps | Split Affected |
-|------------|--------------------------|---------------|----------------|
-| `movie_recommendation` | 2,453 | 25,745 | Train |
-| `hospital` | 3,867 | 39,302 | Test |
-| `suffixtree` | 660 | — | Bench results only |
-| **Total** | **6,320** | **65,047** | — |
+| Repository | License | Removed Raw Trajectories | Removed Steps | Split Affected |
+|------------|---------|--------------------------|---------------|----------------|
+| `movie_recommendation` | No license | 2,453 | 25,745 | Train |
+| `hospital` | No license | 3,867 | 39,302 | Test |
+| `suffixtree` | No license | 660 | — | Bench results only |
+| `cg3lib` | GPL-3.0 | — | — | Context only |
+| `cgal_kernel` | GPL-3.0 | — | — | Context only |
+| `prepair` | GPL-3.0 | — | — | Context only |
+| `route_planning` | GPL-3.0 | — | — | Context only |
+| `numerical_methods` | GPL-3.0 | — | — | Context only |
+| **Total** | | **6,320** | **65,047** | — |
+
+> GPL-3.0 repos: trajectories and labels are included in the dataset. Only the source context files (used by the agent during evaluation) must be cloned separately.
 
 **Publicly available on Kaggle:**
 
@@ -397,6 +429,8 @@ Due to licensing restrictions, the following repositories **cannot be redistribu
 Benchmark pass rate results (`results.json`) retain entries for all repositories including removed ones — these are evaluation metrics only, no source code is redistributed.
 
 To reproduce results on excluded repositories, clone them from GitHub (see **Adding Excluded Repositories** above).
+
+(*)Repositories already included in the benchmark were manually annotated with function-level identifiers to mitigate source-implementation leakage in the agentic setting. The additional repositories cloned via `setup.sh` (hospital, movie_recommendation, suffixtree, cg3lib, cgal_kernel, prepair, route_planning, numerical_methods) should ideally undergo the same annotation process after cloning; otherwise, residual implementation leakage may artificially inflate agentic performance. In a later release, `setup.sh` will be extended to run automatic marker assignment per repository after cloning.
 
 ---
 
