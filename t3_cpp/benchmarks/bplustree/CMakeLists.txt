@@ -1,0 +1,68 @@
+cmake_minimum_required(VERSION 3.15)
+project(bplustree_benchmark)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+add_library(bptree_lib STATIC src/bptree_functions.cpp)
+
+enable_testing()
+
+add_executable(test_search_key tests/test_search_key.cpp)
+target_link_libraries(test_search_key bptree_lib)
+add_test(NAME test_search_key COMMAND test_search_key)
+
+add_executable(test_find_leaf_node tests/test_find_leaf_node.cpp)
+target_link_libraries(test_find_leaf_node bptree_lib)
+add_test(NAME test_find_leaf_node COMMAND test_find_leaf_node)
+
+add_executable(test_find_insert_position tests/test_find_insert_position.cpp)
+target_link_libraries(test_find_insert_position bptree_lib)
+add_test(NAME test_find_insert_position COMMAND test_find_insert_position)
+
+add_executable(test_insert_into_sorted_leaf tests/test_insert_into_sorted_leaf.cpp)
+target_link_libraries(test_insert_into_sorted_leaf bptree_lib)
+add_test(NAME test_insert_into_sorted_leaf COMMAND test_insert_into_sorted_leaf)
+
+add_executable(test_find_first_leaf tests/test_find_first_leaf.cpp)
+target_link_libraries(test_find_first_leaf bptree_lib)
+add_test(NAME test_find_first_leaf COMMAND test_find_first_leaf)
+
+add_executable(test_find_parent tests/test_find_parent.cpp)
+target_link_libraries(test_find_parent bptree_lib)
+add_test(NAME test_find_parent COMMAND test_find_parent)
+
+add_executable(test_count_keys_in_level tests/test_count_keys_in_level.cpp)
+target_link_libraries(test_count_keys_in_level bptree_lib)
+add_test(NAME test_count_keys_in_level COMMAND test_count_keys_in_level)
+
+# Strict tests
+add_executable(test_search_key_strict tests/test_search_key_strict.cpp)
+target_link_libraries(test_search_key_strict bptree_lib)
+add_test(NAME test_search_key_strict COMMAND test_search_key_strict)
+
+add_executable(test_find_leaf_node_strict tests/test_find_leaf_node_strict.cpp)
+target_link_libraries(test_find_leaf_node_strict bptree_lib)
+add_test(NAME test_find_leaf_node_strict COMMAND test_find_leaf_node_strict)
+
+add_executable(test_find_insert_position_strict tests/test_find_insert_position_strict.cpp)
+target_link_libraries(test_find_insert_position_strict bptree_lib)
+add_test(NAME test_find_insert_position_strict COMMAND test_find_insert_position_strict)
+
+add_executable(test_insert_into_sorted_leaf_strict tests/test_insert_into_sorted_leaf_strict.cpp)
+target_link_libraries(test_insert_into_sorted_leaf_strict bptree_lib)
+add_test(NAME test_insert_into_sorted_leaf_strict COMMAND test_insert_into_sorted_leaf_strict)
+
+add_executable(test_find_first_leaf_strict tests/test_find_first_leaf_strict.cpp)
+target_link_libraries(test_find_first_leaf_strict bptree_lib)
+add_test(NAME test_find_first_leaf_strict COMMAND test_find_first_leaf_strict)
+
+add_executable(test_find_parent_strict tests/test_find_parent_strict.cpp)
+target_link_libraries(test_find_parent_strict bptree_lib)
+add_test(NAME test_find_parent_strict COMMAND test_find_parent_strict)
+
+add_executable(test_count_keys_in_level_strict tests/test_count_keys_in_level_strict.cpp)
+target_link_libraries(test_count_keys_in_level_strict bptree_lib)
+add_test(NAME test_count_keys_in_level_strict COMMAND test_count_keys_in_level_strict)

@@ -1,0 +1,171 @@
+cmake_minimum_required(VERSION 3.10)
+project(leveldb_benchmark)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+add_library(leveldb_functions src/leveldb_functions.cpp)
+
+enable_testing()
+
+add_executable(test_encode_fixed32 tests/test_encode_fixed32.cpp)
+target_link_libraries(test_encode_fixed32 leveldb_functions)
+add_test(NAME test_encode_fixed32 COMMAND test_encode_fixed32)
+
+add_executable(test_encode_fixed64 tests/test_encode_fixed64.cpp)
+target_link_libraries(test_encode_fixed64 leveldb_functions)
+add_test(NAME test_encode_fixed64 COMMAND test_encode_fixed64)
+
+add_executable(test_decode_fixed32 tests/test_decode_fixed32.cpp)
+target_link_libraries(test_decode_fixed32 leveldb_functions)
+add_test(NAME test_decode_fixed32 COMMAND test_decode_fixed32)
+
+add_executable(test_decode_fixed64 tests/test_decode_fixed64.cpp)
+target_link_libraries(test_decode_fixed64 leveldb_functions)
+add_test(NAME test_decode_fixed64 COMMAND test_decode_fixed64)
+
+add_executable(test_varint_length tests/test_varint_length.cpp)
+target_link_libraries(test_varint_length leveldb_functions)
+add_test(NAME test_varint_length COMMAND test_varint_length)
+
+add_executable(test_crc32c_mask tests/test_crc32c_mask.cpp)
+target_link_libraries(test_crc32c_mask leveldb_functions)
+add_test(NAME test_crc32c_mask COMMAND test_crc32c_mask)
+
+add_executable(test_crc32c_unmask tests/test_crc32c_unmask.cpp)
+target_link_libraries(test_crc32c_unmask leveldb_functions)
+add_test(NAME test_crc32c_unmask COMMAND test_crc32c_unmask)
+
+add_executable(test_extract_user_key tests/test_extract_user_key.cpp)
+target_link_libraries(test_extract_user_key leveldb_functions)
+add_test(NAME test_extract_user_key COMMAND test_extract_user_key)
+
+add_executable(test_encode_varint32 tests/test_encode_varint32.cpp)
+target_link_libraries(test_encode_varint32 leveldb_functions)
+add_test(NAME test_encode_varint32 COMMAND test_encode_varint32)
+
+add_executable(test_encode_varint64 tests/test_encode_varint64.cpp)
+target_link_libraries(test_encode_varint64 leveldb_functions)
+add_test(NAME test_encode_varint64 COMMAND test_encode_varint64)
+
+add_executable(test_get_varint32_ptr tests/test_get_varint32_ptr.cpp)
+target_link_libraries(test_get_varint32_ptr leveldb_functions)
+add_test(NAME test_get_varint32_ptr COMMAND test_get_varint32_ptr)
+
+add_executable(test_get_varint64_ptr tests/test_get_varint64_ptr.cpp)
+target_link_libraries(test_get_varint64_ptr leveldb_functions)
+add_test(NAME test_get_varint64_ptr COMMAND test_get_varint64_ptr)
+
+add_executable(test_get_varint32 tests/test_get_varint32.cpp)
+target_link_libraries(test_get_varint32 leveldb_functions)
+add_test(NAME test_get_varint32 COMMAND test_get_varint32)
+
+add_executable(test_get_varint64 tests/test_get_varint64.cpp)
+target_link_libraries(test_get_varint64 leveldb_functions)
+add_test(NAME test_get_varint64 COMMAND test_get_varint64)
+
+add_executable(test_put_fixed32 tests/test_put_fixed32.cpp)
+target_link_libraries(test_put_fixed32 leveldb_functions)
+add_test(NAME test_put_fixed32 COMMAND test_put_fixed32)
+
+add_executable(test_put_fixed64 tests/test_put_fixed64.cpp)
+target_link_libraries(test_put_fixed64 leveldb_functions)
+add_test(NAME test_put_fixed64 COMMAND test_put_fixed64)
+
+add_executable(test_put_varint32 tests/test_put_varint32.cpp)
+target_link_libraries(test_put_varint32 leveldb_functions)
+add_test(NAME test_put_varint32 COMMAND test_put_varint32)
+
+add_executable(test_put_varint64 tests/test_put_varint64.cpp)
+target_link_libraries(test_put_varint64 leveldb_functions)
+add_test(NAME test_put_varint64 COMMAND test_put_varint64)
+
+add_executable(test_put_length_prefixed_slice tests/test_put_length_prefixed_slice.cpp)
+target_link_libraries(test_put_length_prefixed_slice leveldb_functions)
+add_test(NAME test_put_length_prefixed_slice COMMAND test_put_length_prefixed_slice)
+
+add_executable(test_get_length_prefixed_slice tests/test_get_length_prefixed_slice.cpp)
+target_link_libraries(test_get_length_prefixed_slice leveldb_functions)
+add_test(NAME test_get_length_prefixed_slice COMMAND test_get_length_prefixed_slice)
+
+add_executable(test_hash tests/test_hash.cpp)
+target_link_libraries(test_hash leveldb_functions)
+add_test(NAME test_hash COMMAND test_hash)
+
+add_executable(test_bloom_hash tests/test_bloom_hash.cpp)
+target_link_libraries(test_bloom_hash leveldb_functions)
+add_test(NAME test_bloom_hash COMMAND test_bloom_hash)
+
+add_executable(test_crc32c_extend tests/test_crc32c_extend.cpp)
+target_link_libraries(test_crc32c_extend leveldb_functions)
+add_test(NAME test_crc32c_extend COMMAND test_crc32c_extend)
+
+add_executable(test_crc32c_value tests/test_crc32c_value.cpp)
+target_link_libraries(test_crc32c_value leveldb_functions)
+add_test(NAME test_crc32c_value COMMAND test_crc32c_value)
+
+add_executable(test_append_internal_key tests/test_append_internal_key.cpp)
+target_link_libraries(test_append_internal_key leveldb_functions)
+add_test(NAME test_append_internal_key COMMAND test_append_internal_key)
+
+add_executable(test_parse_internal_key tests/test_parse_internal_key.cpp)
+target_link_libraries(test_parse_internal_key leveldb_functions)
+add_test(NAME test_parse_internal_key COMMAND test_parse_internal_key)
+
+add_executable(test_shared_prefix tests/test_shared_prefix.cpp)
+target_link_libraries(test_shared_prefix leveldb_functions)
+add_test(NAME test_shared_prefix COMMAND test_shared_prefix)
+
+add_executable(test_random_seed tests/test_random_seed.cpp)
+target_link_libraries(test_random_seed leveldb_functions)
+add_test(NAME test_random_seed COMMAND test_random_seed)
+
+add_executable(test_random_constructor tests/test_random_constructor.cpp)
+target_link_libraries(test_random_constructor leveldb_functions)
+add_test(NAME test_random_constructor COMMAND test_random_constructor)
+
+add_executable(test_random_next tests/test_random_next.cpp)
+target_link_libraries(test_random_next leveldb_functions)
+add_test(NAME test_random_next COMMAND test_random_next)
+
+add_executable(test_skiplist_random_height tests/test_skiplist_random_height.cpp)
+target_link_libraries(test_skiplist_random_height leveldb_functions)
+add_test(NAME test_skiplist_random_height COMMAND test_skiplist_random_height)
+
+add_executable(test_bloom_create_filter tests/test_bloom_create_filter.cpp)
+target_link_libraries(test_bloom_create_filter leveldb_functions)
+add_test(NAME test_bloom_create_filter COMMAND test_bloom_create_filter)
+
+add_executable(test_bloom_key_may_match tests/test_bloom_key_may_match.cpp)
+target_link_libraries(test_bloom_key_may_match leveldb_functions)
+add_test(NAME test_bloom_key_may_match COMMAND test_bloom_key_may_match)
+
+add_executable(test_bloom_double_hash tests/test_bloom_double_hash.cpp)
+target_link_libraries(test_bloom_double_hash leveldb_functions)
+add_test(NAME test_bloom_double_hash COMMAND test_bloom_double_hash)
+
+add_executable(test_lru_lookup tests/test_lru_lookup.cpp)
+target_link_libraries(test_lru_lookup leveldb_functions)
+add_test(NAME test_lru_lookup COMMAND test_lru_lookup)
+
+add_executable(test_lru_evict tests/test_lru_evict.cpp)
+target_link_libraries(test_lru_evict leveldb_functions)
+add_test(NAME test_lru_evict COMMAND test_lru_evict)
+
+add_executable(test_block_add tests/test_block_add.cpp)
+target_link_libraries(test_block_add leveldb_functions)
+add_test(NAME test_block_add COMMAND test_block_add)
+
+add_executable(test_block_finish tests/test_block_finish.cpp)
+target_link_libraries(test_block_finish leveldb_functions)
+add_test(NAME test_block_finish COMMAND test_block_finish)
+
+add_executable(test_random_uniform tests/test_random_uniform.cpp)
+target_link_libraries(test_random_uniform leveldb_functions)
+add_test(NAME test_random_uniform COMMAND test_random_uniform)
+
+add_executable(test_random_onein tests/test_random_onein.cpp)
+target_link_libraries(test_random_onein leveldb_functions)
+add_test(NAME test_random_onein COMMAND test_random_onein)

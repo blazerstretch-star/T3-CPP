@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+mkdir -p build
+cd build
+
+cmake ..
+
+make
+
+ctest --output-on-failure
+
+exit $?

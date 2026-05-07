@@ -1,0 +1,84 @@
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release, Debug]
+        cpp_compiler:
+          - g++
+          - clang++
+          - cl
+        exclude:
+          - os: windows-latest
+            cpp_compiler: g++
+          - os: windows-latest
+            cpp_compiler: clang++
+          - os: ubuntu-latest
+            cpp_compiler: cl
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up CMake
+      shell: bash
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --no-progress
+        else
+          sudo apt-get update
+          sudo apt-get install -y cmake
+        fi
+
+    - name: Install dependencies on Ubuntu
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Clean build directory
+      shell: bash
+      run: |
+        rm -rf build
+        mkdir build
+
+    - name: Configure CMake
+      shell: bash
+      run: |
+        cmake -B build \
+              -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -S .
+
+    - name: Build
+      shell: bash
+      run: cmake --build build --config ${{ matrix.build_type }}
+
+    - name: Run tests
+      shell: bash
+      working-directory: build
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          ctest -C ${{ matrix.build_type }} --output-on-failure
+        else
+          ctest --output-on-failure
+        fi
+
+    - name: Capture build logs
+      if: failure()
+      shell: bash
+      run: |
+        echo "Build failed. Capturing logs..."
+        cat build/CMakeFiles/CMakeOutput.log
+        cat build/CMakeFiles/CMakeError.log

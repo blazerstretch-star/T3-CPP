@@ -1,0 +1,79 @@
+cmake_minimum_required(VERSION 3.10)
+project(suffixtree)
+
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Build main library
+add_library(suffixtree_functions src/suffixtree_functions.cpp)
+
+# Build individual test executables
+add_executable(test_copy_assign_context tests/test_copy_assign_context.cpp)
+target_link_libraries(test_copy_assign_context suffixtree_functions)
+
+add_executable(test_move_assign_context tests/test_move_assign_context.cpp)
+target_link_libraries(test_move_assign_context suffixtree_functions)
+
+add_executable(test_get_text tests/test_get_text.cpp)
+target_link_libraries(test_get_text suffixtree_functions)
+
+add_executable(test_set_text tests/test_set_text.cpp)
+target_link_libraries(test_set_text suffixtree_functions)
+
+add_executable(test_find tests/test_find.cpp)
+target_link_libraries(test_find suffixtree_functions)
+
+add_executable(test_ends_with tests/test_ends_with.cpp)
+target_link_libraries(test_ends_with suffixtree_functions)
+
+add_executable(test_contains tests/test_contains.cpp)
+target_link_libraries(test_contains suffixtree_functions)
+
+add_executable(test_check_suffix_links tests/test_check_suffix_links.cpp)
+target_link_libraries(test_check_suffix_links suffixtree_functions)
+
+add_executable(test_rebuild tests/test_rebuild.cpp)
+target_link_libraries(test_rebuild suffixtree_functions)
+
+add_executable(test_relabel_text_end tests/test_relabel_text_end.cpp)
+target_link_libraries(test_relabel_text_end suffixtree_functions)
+
+add_executable(test_traverse_node tests/test_traverse_node.cpp)
+target_link_libraries(test_traverse_node suffixtree_functions)
+
+add_executable(test_traverse_tree tests/test_traverse_tree.cpp)
+target_link_libraries(test_traverse_tree suffixtree_functions)
+
+add_executable(test_get_edge_label tests/test_get_edge_label.cpp)
+target_link_libraries(test_get_edge_label suffixtree_functions)
+
+add_executable(test_get_path_label tests/test_get_path_label.cpp)
+target_link_libraries(test_get_path_label suffixtree_functions)
+
+add_executable(test_node_get_text_end tests/test_node_get_text_end.cpp)
+target_link_libraries(test_node_get_text_end suffixtree_functions)
+
+add_executable(test_get_text_adversarial tests/test_get_text_adversarial.cpp)
+target_link_libraries(test_get_text_adversarial suffixtree_functions)
+
+# Enable testing
+enable_testing()
+
+# Add individual tests
+add_test(NAME test_copy_assign_context COMMAND test_copy_assign_context)
+add_test(NAME test_move_assign_context COMMAND test_move_assign_context)
+add_test(NAME test_get_text COMMAND test_get_text)
+add_test(NAME test_set_text COMMAND test_set_text)
+add_test(NAME test_find COMMAND test_find)
+add_test(NAME test_ends_with COMMAND test_ends_with)
+add_test(NAME test_contains COMMAND test_contains)
+add_test(NAME test_check_suffix_links COMMAND test_check_suffix_links)
+add_test(NAME test_rebuild COMMAND test_rebuild)
+add_test(NAME test_relabel_text_end COMMAND test_relabel_text_end)
+add_test(NAME test_traverse_node COMMAND test_traverse_node)
+add_test(NAME test_traverse_tree COMMAND test_traverse_tree)
+add_test(NAME test_get_edge_label COMMAND test_get_edge_label)
+add_test(NAME test_get_path_label COMMAND test_get_path_label)
+add_test(NAME test_node_get_text_end COMMAND test_node_get_text_end)
+add_test(NAME test_get_text_adversarial COMMAND test_get_text_adversarial)

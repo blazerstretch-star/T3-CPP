@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.10)
+project(huffman_benchmark)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+add_library(huffman_functions src/huffman_functions.cpp)
+
+enable_testing()
+
+add_executable(test_build_frequency_table tests/test_build_frequency_table.cpp)
+target_link_libraries(test_build_frequency_table huffman_functions)
+add_test(NAME test_build_frequency_table COMMAND test_build_frequency_table)
+
+add_executable(test_build_huffman_tree tests/test_build_huffman_tree.cpp)
+target_link_libraries(test_build_huffman_tree huffman_functions)
+add_test(NAME test_build_huffman_tree COMMAND test_build_huffman_tree)
+
+add_executable(test_build_huffman_codes tests/test_build_huffman_codes.cpp)
+target_link_libraries(test_build_huffman_codes huffman_functions)
+add_test(NAME test_build_huffman_codes COMMAND test_build_huffman_codes)
+
+add_executable(test_encode_text tests/test_encode_text.cpp)
+target_link_libraries(test_encode_text huffman_functions)
+add_test(NAME test_encode_text COMMAND test_encode_text)
+
+add_executable(test_write_huffman_dictionary tests/test_write_huffman_dictionary.cpp)
+target_link_libraries(test_write_huffman_dictionary huffman_functions)
+add_test(NAME test_write_huffman_dictionary COMMAND test_write_huffman_dictionary)
+
+add_executable(test_read_huffman_dictionary tests/test_read_huffman_dictionary.cpp)
+target_link_libraries(test_read_huffman_dictionary huffman_functions)
+add_test(NAME test_read_huffman_dictionary COMMAND test_read_huffman_dictionary)
+
+add_executable(test_decode_data tests/test_decode_data.cpp)
+target_link_libraries(test_decode_data huffman_functions)
+add_test(NAME test_decode_data COMMAND test_decode_data)

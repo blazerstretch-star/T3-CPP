@@ -1,0 +1,94 @@
+cmake_minimum_required(VERSION 3.12)
+project(tinyrenderer_benchmark LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_library(tinyrenderer_lib STATIC src/tinyrenderer_functions.cpp)
+target_include_directories(tinyrenderer_lib PUBLIC src)
+
+enable_testing()
+
+add_executable(test_vec3_dot tests/test_vec3_dot.cpp)
+target_link_libraries(test_vec3_dot tinyrenderer_lib)
+add_test(NAME test_vec3_dot COMMAND test_vec3_dot)
+
+add_executable(test_vec3_add tests/test_vec3_add.cpp)
+target_link_libraries(test_vec3_add tinyrenderer_lib)
+add_test(NAME test_vec3_add COMMAND test_vec3_add)
+
+add_executable(test_vec3_subtract tests/test_vec3_subtract.cpp)
+target_link_libraries(test_vec3_subtract tinyrenderer_lib)
+add_test(NAME test_vec3_subtract COMMAND test_vec3_subtract)
+
+add_executable(test_vec3_scale tests/test_vec3_scale.cpp)
+target_link_libraries(test_vec3_scale tinyrenderer_lib)
+add_test(NAME test_vec3_scale COMMAND test_vec3_scale)
+
+add_executable(test_vec3_norm tests/test_vec3_norm.cpp)
+target_link_libraries(test_vec3_norm tinyrenderer_lib)
+add_test(NAME test_vec3_norm COMMAND test_vec3_norm)
+
+add_executable(test_vec3_normalize tests/test_vec3_normalize.cpp)
+target_link_libraries(test_vec3_normalize tinyrenderer_lib)
+add_test(NAME test_vec3_normalize COMMAND test_vec3_normalize)
+
+add_executable(test_vec3_cross tests/test_vec3_cross.cpp)
+target_link_libraries(test_vec3_cross tinyrenderer_lib)
+add_test(NAME test_vec3_cross COMMAND test_vec3_cross)
+
+add_executable(test_mat3_transpose tests/test_mat3_transpose.cpp)
+target_link_libraries(test_mat3_transpose tinyrenderer_lib)
+add_test(NAME test_mat3_transpose COMMAND test_mat3_transpose)
+
+add_executable(test_mat3_multiply tests/test_mat3_multiply.cpp)
+target_link_libraries(test_mat3_multiply tinyrenderer_lib)
+add_test(NAME test_mat3_multiply COMMAND test_mat3_multiply)
+
+add_executable(test_mat3_vec3_multiply tests/test_mat3_vec3_multiply.cpp)
+target_link_libraries(test_mat3_vec3_multiply tinyrenderer_lib)
+add_test(NAME test_mat3_vec3_multiply COMMAND test_mat3_vec3_multiply)
+
+add_executable(test_mat3_determinant tests/test_mat3_determinant.cpp)
+target_link_libraries(test_mat3_determinant tinyrenderer_lib)
+add_test(NAME test_mat3_determinant COMMAND test_mat3_determinant)
+
+add_executable(test_mat3_cofactor tests/test_mat3_cofactor.cpp)
+target_link_libraries(test_mat3_cofactor tinyrenderer_lib)
+add_test(NAME test_mat3_cofactor COMMAND test_mat3_cofactor)
+
+add_executable(test_mat3_invert tests/test_mat3_invert.cpp)
+target_link_libraries(test_mat3_invert tinyrenderer_lib)
+add_test(NAME test_mat3_invert COMMAND test_mat3_invert)
+
+add_executable(test_mat4_transpose tests/test_mat4_transpose.cpp)
+target_link_libraries(test_mat4_transpose tinyrenderer_lib)
+add_test(NAME test_mat4_transpose COMMAND test_mat4_transpose)
+
+add_executable(test_mat4_multiply tests/test_mat4_multiply.cpp)
+target_link_libraries(test_mat4_multiply tinyrenderer_lib)
+add_test(NAME test_mat4_multiply COMMAND test_mat4_multiply)
+
+add_executable(test_mat4_vec4_multiply tests/test_mat4_vec4_multiply.cpp)
+target_link_libraries(test_mat4_vec4_multiply tinyrenderer_lib)
+add_test(NAME test_mat4_vec4_multiply COMMAND test_mat4_vec4_multiply)
+
+add_executable(test_lookat tests/test_lookat.cpp)
+target_link_libraries(test_lookat tinyrenderer_lib)
+add_test(NAME test_lookat COMMAND test_lookat)
+
+add_executable(test_perspective tests/test_perspective.cpp)
+target_link_libraries(test_perspective tinyrenderer_lib)
+add_test(NAME test_perspective COMMAND test_perspective)
+
+add_executable(test_viewport tests/test_viewport.cpp)
+target_link_libraries(test_viewport tinyrenderer_lib)
+add_test(NAME test_viewport COMMAND test_viewport)
+
+add_executable(test_barycentric tests/test_barycentric.cpp)
+target_link_libraries(test_barycentric tinyrenderer_lib)
+add_test(NAME test_barycentric COMMAND test_barycentric)
+
+add_executable(test_is_backface tests/test_is_backface.cpp)
+target_link_libraries(test_is_backface tinyrenderer_lib)
+add_test(NAME test_is_backface COMMAND test_is_backface)

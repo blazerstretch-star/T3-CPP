@@ -1,0 +1,10 @@
+#include "../src/ds_algorithms.h"
+#include <cassert>
+
+int main() {
+    TreeNode* root = nullptr;
+    Algorithms::bstInsert(root, 5);
+    Algorithms::bstInsert(root, 3);
+    assert(root->value == 5 && root->left->value == 3);
+    return 0;
+}

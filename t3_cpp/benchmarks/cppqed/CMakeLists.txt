@@ -1,0 +1,68 @@
+cmake_minimum_required(VERSION 3.12)
+project(cppqed_benchmark CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find required packages
+find_package(Boost 1.71 REQUIRED COMPONENTS math_c99)
+find_package(Eigen3 3.3 REQUIRED)
+
+# Include directories
+include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+# Create library from source functions
+add_library(cppqed_lib STATIC
+    src/cppqed_functions.cpp
+)
+
+target_link_libraries(cppqed_lib
+    ${Boost_LIBRARIES}
+    Eigen3::Eigen
+)
+
+# Enable testing
+enable_testing()
+
+# Test executables
+add_executable(test_calculate_wigner_weight tests/test_calculate_wigner_weight.cpp)
+target_link_libraries(test_calculate_wigner_weight cppqed_lib)
+add_test(NAME test_calculate_wigner_weight COMMAND test_calculate_wigner_weight)
+
+add_executable(test_fill_hermite_array tests/test_fill_hermite_array.cpp)
+target_link_libraries(test_fill_hermite_array cppqed_lib)
+add_test(NAME test_fill_hermite_array COMMAND test_fill_hermite_array)
+
+add_executable(test_calculate_wigner_kernel tests/test_calculate_wigner_kernel.cpp)
+target_link_libraries(test_calculate_wigner_kernel cppqed_lib)
+add_test(NAME test_calculate_wigner_kernel COMMAND test_calculate_wigner_kernel)
+
+add_executable(test_apply_sparse_matrix tests/test_apply_sparse_matrix.cpp)
+target_link_libraries(test_apply_sparse_matrix cppqed_lib)
+add_test(NAME test_apply_sparse_matrix COMMAND test_apply_sparse_matrix)
+
+add_executable(test_calculate_ddho_particular_solution tests/test_calculate_ddho_particular_solution.cpp)
+target_link_libraries(test_calculate_ddho_particular_solution cppqed_lib)
+add_test(NAME test_calculate_ddho_particular_solution COMMAND test_calculate_ddho_particular_solution)
+
+add_executable(test_calculate_spin_plus_diagonal tests/test_calculate_spin_plus_diagonal.cpp)
+target_link_libraries(test_calculate_spin_plus_diagonal cppqed_lib)
+add_test(NAME test_calculate_spin_plus_diagonal COMMAND test_calculate_spin_plus_diagonal)
+
+add_executable(test_calculate_mode_annihilation_diagonal tests/test_calculate_mode_annihilation_diagonal.cpp)
+target_link_libraries(test_calculate_mode_annihilation_diagonal cppqed_lib)
+add_test(NAME test_calculate_mode_annihilation_diagonal COMMAND test_calculate_mode_annihilation_diagonal)
+
+add_executable(test_calculate_coherent_element tests/test_calculate_coherent_element.cpp)
+target_link_libraries(test_calculate_coherent_element cppqed_lib)
+add_test(NAME test_calculate_coherent_element COMMAND test_calculate_coherent_element)
+
+add_executable(test_calculate_mode_function tests/test_calculate_mode_function.cpp)
+target_link_libraries(test_calculate_mode_function cppqed_lib)
+add_test(NAME test_calculate_mode_function COMMAND test_calculate_mode_function)
+
+add_executable(test_apply_photon_loss_jump tests/test_apply_photon_loss_jump.cpp)
+target_link_libraries(test_apply_photon_loss_jump cppqed_lib)
+add_test(NAME test_apply_photon_loss_jump COMMAND test_apply_photon_loss_jump)

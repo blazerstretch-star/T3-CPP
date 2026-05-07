@@ -1,0 +1,65 @@
+cmake_minimum_required(VERSION 3.10)
+project(prepair_cgal)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(CGAL REQUIRED)
+find_package(GDAL REQUIRED)
+
+include_directories(src)
+
+file(GLOB SOURCES "src/*.cpp")
+list(FILTER SOURCES EXCLUDE REGEX ".*_complete\\.cpp$")
+add_library(${PROJECT_NAME}_lib ${SOURCES})
+target_link_libraries(${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_extract_points_from_coordinates tests/test_extract_points_from_coordinates.cpp)
+target_link_libraries(test_extract_points_from_coordinates ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_compute_best_fitting_plane tests/test_compute_best_fitting_plane.cpp)
+target_link_libraries(test_compute_best_fitting_plane ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_insert_polygon_constraints tests/test_insert_polygon_constraints.cpp)
+target_link_libraries(test_insert_polygon_constraints ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_label_triangulation_faces tests/test_label_triangulation_faces.cpp)
+target_link_libraries(test_label_triangulation_faces ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_is_triangulation_edge_constrained tests/test_is_triangulation_edge_constrained.cpp)
+target_link_libraries(test_is_triangulation_edge_constrained ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_get_face_boundary_vertices tests/test_get_face_boundary_vertices.cpp)
+target_link_libraries(test_get_face_boundary_vertices ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_extract_points_from_coordinates_strict tests/test_extract_points_from_coordinates_strict.cpp)
+target_link_libraries(test_extract_points_from_coordinates_strict ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_compute_best_fitting_plane_strict tests/test_compute_best_fitting_plane_strict.cpp)
+target_link_libraries(test_compute_best_fitting_plane_strict ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_insert_polygon_constraints_strict tests/test_insert_polygon_constraints_strict.cpp)
+target_link_libraries(test_insert_polygon_constraints_strict ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_label_triangulation_faces_strict tests/test_label_triangulation_faces_strict.cpp)
+target_link_libraries(test_label_triangulation_faces_strict ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_is_triangulation_edge_constrained_strict tests/test_is_triangulation_edge_constrained_strict.cpp)
+target_link_libraries(test_is_triangulation_edge_constrained_strict ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+add_executable(test_get_face_boundary_vertices_strict tests/test_get_face_boundary_vertices_strict.cpp)
+target_link_libraries(test_get_face_boundary_vertices_strict ${PROJECT_NAME}_lib CGAL::CGAL ${GDAL_LIBRARIES})
+
+enable_testing()
+add_test(NAME test_extract_points_from_coordinates COMMAND test_extract_points_from_coordinates)
+add_test(NAME test_compute_best_fitting_plane COMMAND test_compute_best_fitting_plane)
+add_test(NAME test_insert_polygon_constraints COMMAND test_insert_polygon_constraints)
+add_test(NAME test_label_triangulation_faces COMMAND test_label_triangulation_faces)
+add_test(NAME test_is_triangulation_edge_constrained COMMAND test_is_triangulation_edge_constrained)
+add_test(NAME test_get_face_boundary_vertices COMMAND test_get_face_boundary_vertices)
+add_test(NAME test_extract_points_from_coordinates_strict COMMAND test_extract_points_from_coordinates_strict)
+add_test(NAME test_compute_best_fitting_plane_strict COMMAND test_compute_best_fitting_plane_strict)
+add_test(NAME test_insert_polygon_constraints_strict COMMAND test_insert_polygon_constraints_strict)
+add_test(NAME test_label_triangulation_faces_strict COMMAND test_label_triangulation_faces_strict)
+add_test(NAME test_is_triangulation_edge_constrained_strict COMMAND test_is_triangulation_edge_constrained_strict)
+add_test(NAME test_get_face_boundary_vertices_strict COMMAND test_get_face_boundary_vertices_strict)

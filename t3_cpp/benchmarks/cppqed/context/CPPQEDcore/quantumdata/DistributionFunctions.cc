@@ -1,0 +1,83 @@
+// Copyright András Vukics 2006–2023. Distributed under the Boost Software License, Version 1.0. (See accompanying file LICENSE.txt)
+#include "DistributionFunctions.h"
+
+#include "Pars.h"
+
+#include <boost/math/special_functions/binomial.hpp>
+#include <boost/math/special_functions/hermite.hpp>
+#include <boost/math/special_functions/laguerre.hpp>
+#include <boost/math/special_functions/factorials.hpp>
+
+
+using namespace cppqedutils;
+using namespace boost::math;
+
+
+namespace quantumdata {
+
+
+ParsFunctionScan::ParsFunctionScan(parameters::Table& p, const std::string& mod)
+  : fLimitXUL(p.addTitle("Distribution function scan",mod).add("fLimitXUL","",2.)),
+    fLimitYUL(p.add("fLimitYUL","",2.)),
+    fLimitXL(p.add("fLimitXL","",-2.)),
+    fLimitXU(p.add("fLimitXU","",2.)),
+    fLimitYL(p.add("fLimitYL","",-2.)),
+    fLimitYU(p.add("fLimitYU","",2.)),
+    fStep(p.add("fStep","",.1)),
+    fCutoff(p.add("fCutoff","",100))
+{}
+
+
+  
+namespace {
+
+
+const WignerFunctionKernelOld::Hermites fillWithHermite(size_t dim, double x)
+{
+  // FUNCTION_ID: cppqed_func002 - START
+  WignerFunctionKernelOld::Hermites res(2*dim-1);
+  res(0)=hermite(0,x); res(1)=hermite(1,x);
+  for (unsigned l=1; l<res.size()-1; ++l)
+    res(l+1)=hermite_next(l,x,res(l),res(l-1));
+  return res;
+  // FUNCTION_ID: cppqed_func002 - END
+}
+
+
+}
+
+double details::w(size_t n, double r, size_t k)
+{
+  // FUNCTION_ID: cppqed_func001 - START
+  const double sqrR=sqr(r);
+  return minusOneToThePowerOf(n)/PI*sqrt(factorial<double>(n)/factorial<double>(n+k))*exp(-2*sqrR)*pow(2*r,k)*laguerre(n,k,4*sqrR);
+  // FUNCTION_ID: cppqed_func001 - END
+}
+
+
+WignerFunctionKernelOld::WignerFunctionKernelOld(double x, double y, size_t dim)
+  : hermite_m2x_(fillWithHermite(dim,-2*x)), hermite_2y_(fillWithHermite(dim,2*y))
+{}
+
+
+dcomp WignerFunctionKernelOld::operator()(size_t m, size_t n) const
+{
+  // FUNCTION_ID: cppqed_func003 - START
+  dcomp res(0);
+
+  for (size_t u=0; u<=m; ++u) for (size_t v=0; v<=n; ++v)
+    res+=
+      binomial_coefficient<double>(m,u)*
+      binomial_coefficient<double>(n,v)*
+      minusOneToThePowerOf(v)*
+      pow(1i,u+v)*
+      hermite_m2x_(    u+v)*
+      hermite_2y_ (n+m-u-v);
+
+  return res;
+  // FUNCTION_ID: cppqed_func003 - END
+}
+
+
+} // quantumdata
+

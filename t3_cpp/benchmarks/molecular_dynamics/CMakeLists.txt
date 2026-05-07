@@ -1,0 +1,91 @@
+cmake_minimum_required(VERSION 3.10)
+project(MolecularDynamics)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Source files
+set(MD_SOURCES
+    src/md_functions.cpp
+)
+
+# Create library
+add_library(md_lib STATIC ${MD_SOURCES})
+target_include_directories(md_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+# Enable testing
+enable_testing()
+
+# Test executables
+add_executable(test_calculateLJPotential tests/test_calculateLJPotential.cpp)
+target_link_libraries(test_calculateLJPotential md_lib)
+add_test(NAME test_calculateLJPotential COMMAND test_calculateLJPotential)
+
+add_executable(test_calculateLJForce tests/test_calculateLJForce.cpp)
+target_link_libraries(test_calculateLJForce md_lib)
+add_test(NAME test_calculateLJForce COMMAND test_calculateLJForce)
+
+add_executable(test_applyPeriodicBoundary tests/test_applyPeriodicBoundary.cpp)
+target_link_libraries(test_applyPeriodicBoundary md_lib)
+add_test(NAME test_applyPeriodicBoundary COMMAND test_applyPeriodicBoundary)
+
+add_executable(test_minimumImageDistance tests/test_minimumImageDistance.cpp)
+target_link_libraries(test_minimumImageDistance md_lib)
+add_test(NAME test_minimumImageDistance COMMAND test_minimumImageDistance)
+
+add_executable(test_velocityVerletStep1 tests/test_velocityVerletStep1.cpp)
+target_link_libraries(test_velocityVerletStep1 md_lib)
+add_test(NAME test_velocityVerletStep1 COMMAND test_velocityVerletStep1)
+
+add_executable(test_velocityVerletStep2 tests/test_velocityVerletStep2.cpp)
+target_link_libraries(test_velocityVerletStep2 md_lib)
+add_test(NAME test_velocityVerletStep2 COMMAND test_velocityVerletStep2)
+
+add_executable(test_calculateKineticEnergy tests/test_calculateKineticEnergy.cpp)
+target_link_libraries(test_calculateKineticEnergy md_lib)
+add_test(NAME test_calculateKineticEnergy COMMAND test_calculateKineticEnergy)
+
+add_executable(test_calculatePotentialEnergy tests/test_calculatePotentialEnergy.cpp)
+target_link_libraries(test_calculatePotentialEnergy md_lib)
+add_test(NAME test_calculatePotentialEnergy COMMAND test_calculatePotentialEnergy)
+
+add_executable(test_calculateTemperature tests/test_calculateTemperature.cpp)
+target_link_libraries(test_calculateTemperature md_lib)
+add_test(NAME test_calculateTemperature COMMAND test_calculateTemperature)
+
+add_executable(test_applyAndersonThermostat tests/test_applyAndersonThermostat.cpp)
+target_link_libraries(test_applyAndersonThermostat md_lib)
+add_test(NAME test_applyAndersonThermostat COMMAND test_applyAndersonThermostat)
+
+add_executable(test_initializePositionsLattice tests/test_initializePositionsLattice.cpp)
+target_link_libraries(test_initializePositionsLattice md_lib)
+add_test(NAME test_initializePositionsLattice COMMAND test_initializePositionsLattice)
+
+add_executable(test_initializeVelocitiesMB tests/test_initializeVelocitiesMB.cpp)
+target_link_libraries(test_initializeVelocitiesMB md_lib)
+add_test(NAME test_initializeVelocitiesMB COMMAND test_initializeVelocitiesMB)
+
+add_executable(test_computeForces tests/test_computeForces.cpp)
+target_link_libraries(test_computeForces md_lib)
+add_test(NAME test_computeForces COMMAND test_computeForces)
+
+# Strict test executables
+add_executable(test_calculateLJPotential_strict tests/test_calculateLJPotential_strict.cpp)
+target_link_libraries(test_calculateLJPotential_strict md_lib)
+add_test(NAME test_calculateLJPotential_strict COMMAND test_calculateLJPotential_strict)
+
+add_executable(test_calculateLJForce_strict tests/test_calculateLJForce_strict.cpp)
+target_link_libraries(test_calculateLJForce_strict md_lib)
+add_test(NAME test_calculateLJForce_strict COMMAND test_calculateLJForce_strict)
+
+add_executable(test_applyPeriodicBoundary_strict tests/test_applyPeriodicBoundary_strict.cpp)
+target_link_libraries(test_applyPeriodicBoundary_strict md_lib)
+add_test(NAME test_applyPeriodicBoundary_strict COMMAND test_applyPeriodicBoundary_strict)
+
+add_executable(test_minimumImageDistance_strict tests/test_minimumImageDistance_strict.cpp)
+target_link_libraries(test_minimumImageDistance_strict md_lib)
+add_test(NAME test_minimumImageDistance_strict COMMAND test_minimumImageDistance_strict)
+
+add_executable(test_computeForces_strict tests/test_computeForces_strict.cpp)
+target_link_libraries(test_computeForces_strict md_lib)
+add_test(NAME test_computeForces_strict COMMAND test_computeForces_strict)

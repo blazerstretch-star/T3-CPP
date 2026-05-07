@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.16)
+project(distlib_benchmark)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-Wno-deprecated-declarations)
+
+# Find OpenSSL for MD5
+find_package(OpenSSL REQUIRED)
+
+# Main library
+add_library(distlib_functions 
+    src/distlib_functions.cpp
+)
+target_include_directories(distlib_functions PUBLIC src)
+target_link_libraries(distlib_functions OpenSSL::Crypto)
+
+# Test executables
+add_executable(test_consistent_hash tests/test_consistent_hash.cpp)
+target_link_libraries(test_consistent_hash distlib_functions)
+
+add_executable(test_bucket_partition_point tests/test_bucket_partition_point.cpp)
+target_link_libraries(test_bucket_partition_point distlib_functions)
+
+add_executable(test_bucket_add_partition_point tests/test_bucket_add_partition_point.cpp)
+target_link_libraries(test_bucket_add_partition_point distlib_functions)
+
+add_executable(test_bucket_remove_partition_point tests/test_bucket_remove_partition_point.cpp)
+target_link_libraries(test_bucket_remove_partition_point distlib_functions)
+
+add_executable(test_bucket_less_than tests/test_bucket_less_than.cpp)
+target_link_libraries(test_bucket_less_than distlib_functions)
+
+add_executable(test_bucket_equals tests/test_bucket_equals.cpp)
+target_link_libraries(test_bucket_equals distlib_functions)
+
+add_executable(test_view_find_bucket tests/test_view_find_bucket.cpp)
+target_link_libraries(test_view_find_bucket distlib_functions)
+
+add_executable(test_make_balanced_view_map tests/test_make_balanced_view_map.cpp)
+target_link_libraries(test_make_balanced_view_map distlib_functions)
+
+add_executable(test_improvements_complete tests/test_improvements_complete.cpp)
+target_link_libraries(test_improvements_complete distlib_functions)
+
+# Enable testing
+enable_testing()
+add_test(NAME consistent_hash COMMAND test_consistent_hash)
+add_test(NAME bucket_partition_point COMMAND test_bucket_partition_point)
+add_test(NAME bucket_add_partition_point COMMAND test_bucket_add_partition_point)
+add_test(NAME bucket_remove_partition_point COMMAND test_bucket_remove_partition_point)
+add_test(NAME bucket_less_than COMMAND test_bucket_less_than)
+add_test(NAME bucket_equals COMMAND test_bucket_equals)
+add_test(NAME view_find_bucket COMMAND test_view_find_bucket)
+add_test(NAME make_balanced_view_map COMMAND test_make_balanced_view_map)
+add_test(NAME improvements_complete COMMAND test_improvements_complete)

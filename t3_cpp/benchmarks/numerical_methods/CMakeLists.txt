@@ -1,0 +1,91 @@
+cmake_minimum_required(VERSION 3.10)
+project(numerical_methods_benchmark)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
+add_library(numerical_functions src/numerical_functions.cpp)
+
+enable_testing()
+
+add_executable(test_sign tests/test_sign.cpp)
+target_link_libraries(test_sign numerical_functions)
+add_test(NAME test_sign COMMAND test_sign)
+
+add_executable(test_bisection_root_finder tests/test_bisection_root_finder.cpp)
+target_link_libraries(test_bisection_root_finder numerical_functions)
+add_test(NAME test_bisection_root_finder COMMAND test_bisection_root_finder)
+
+add_executable(test_midpoint_integration tests/test_midpoint_integration.cpp)
+target_link_libraries(test_midpoint_integration numerical_functions)
+add_test(NAME test_midpoint_integration COMMAND test_midpoint_integration)
+
+add_executable(test_simpson_integration tests/test_simpson_integration.cpp)
+target_link_libraries(test_simpson_integration numerical_functions)
+add_test(NAME test_simpson_integration COMMAND test_simpson_integration)
+
+add_executable(test_trapezoidal_integration tests/test_trapezoidal_integration.cpp)
+target_link_libraries(test_trapezoidal_integration numerical_functions)
+add_test(NAME test_trapezoidal_integration COMMAND test_trapezoidal_integration)
+
+add_executable(test_adaptive_midpoint tests/test_adaptive_midpoint.cpp)
+target_link_libraries(test_adaptive_midpoint numerical_functions)
+add_test(NAME test_adaptive_midpoint COMMAND test_adaptive_midpoint)
+
+add_executable(test_adaptive_simpson tests/test_adaptive_simpson.cpp)
+target_link_libraries(test_adaptive_simpson numerical_functions)
+add_test(NAME test_adaptive_simpson COMMAND test_adaptive_simpson)
+
+add_executable(test_adaptive_trapezoidal tests/test_adaptive_trapezoidal.cpp)
+target_link_libraries(test_adaptive_trapezoidal numerical_functions)
+add_test(NAME test_adaptive_trapezoidal COMMAND test_adaptive_trapezoidal)
+
+add_executable(test_euler_step tests/test_euler_step.cpp)
+target_link_libraries(test_euler_step numerical_functions)
+add_test(NAME test_euler_step COMMAND test_euler_step)
+
+add_executable(test_runge_kutta_step tests/test_runge_kutta_step.cpp)
+target_link_libraries(test_runge_kutta_step numerical_functions)
+add_test(NAME test_runge_kutta_step COMMAND test_runge_kutta_step)
+
+add_executable(test_lcg_rand tests/test_lcg_rand.cpp)
+target_link_libraries(test_lcg_rand numerical_functions)
+add_test(NAME test_lcg_rand COMMAND test_lcg_rand)
+
+add_executable(test_uniform_random tests/test_uniform_random.cpp)
+target_link_libraries(test_uniform_random numerical_functions)
+add_test(NAME test_uniform_random COMMAND test_uniform_random)
+
+add_executable(test_gaussian_box_muller tests/test_gaussian_box_muller.cpp)
+target_link_libraries(test_gaussian_box_muller numerical_functions)
+add_test(NAME test_gaussian_box_muller COMMAND test_gaussian_box_muller)
+
+add_executable(test_exponential_random tests/test_exponential_random.cpp)
+target_link_libraries(test_exponential_random numerical_functions)
+add_test(NAME test_exponential_random COMMAND test_exponential_random)
+
+add_executable(test_monte_carlo_mean tests/test_monte_carlo_mean.cpp)
+target_link_libraries(test_monte_carlo_mean numerical_functions)
+add_test(NAME test_monte_carlo_mean COMMAND test_monte_carlo_mean)
+
+add_executable(test_monte_carlo_hit_or_miss tests/test_monte_carlo_hit_or_miss.cpp)
+target_link_libraries(test_monte_carlo_hit_or_miss numerical_functions)
+add_test(NAME test_monte_carlo_hit_or_miss COMMAND test_monte_carlo_hit_or_miss)
+
+add_executable(test_sign_strict tests/test_sign_strict.cpp)
+target_link_libraries(test_sign_strict numerical_functions)
+add_test(NAME test_sign_strict COMMAND test_sign_strict)
+
+add_executable(test_bisection_root_finder_strict tests/test_bisection_root_finder_strict.cpp)
+target_link_libraries(test_bisection_root_finder_strict numerical_functions)
+add_test(NAME test_bisection_root_finder_strict COMMAND test_bisection_root_finder_strict)
+
+add_executable(test_midpoint_integration_strict tests/test_midpoint_integration_strict.cpp)
+target_link_libraries(test_midpoint_integration_strict numerical_functions)
+add_test(NAME test_midpoint_integration_strict COMMAND test_midpoint_integration_strict)
+
+add_executable(test_runge_kutta_step_strict tests/test_runge_kutta_step_strict.cpp)
+target_link_libraries(test_runge_kutta_step_strict numerical_functions)
+add_test(NAME test_runge_kutta_step_strict COMMAND test_runge_kutta_step_strict)
